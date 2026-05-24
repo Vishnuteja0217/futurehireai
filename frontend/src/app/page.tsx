@@ -888,7 +888,12 @@ function AnalysisCard({
   section: any;
   color: string;
 }) {
-  return (
+  
+  if (!section.items || section.items.length === 0) {
+  return null;
+}
+
+return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
       <h2 className={`mb-3 text-2xl font-semibold ${color}`}>
         {section.title}
