@@ -278,7 +278,7 @@ const fetchJDFromUrl = async () => {
       {/* Navbar */}
       <nav className="relative z-10 flex items-center justify-between px-10 py-6 border-b border-white/10">
         <h1 className="text-2xl font-bold tracking-tight">
-          AI Career Copilot
+          FutureHire AI
         </h1>
 
         <button className="rounded-full border border-white/20 px-5 py-2 text-sm hover:bg-white hover:text-black transition-all duration-300">
