@@ -9,3 +9,4 @@ python-docx
 reportlab
 PyPDF2
 docx2txt
+PyMuPDF
