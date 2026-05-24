@@ -40,3 +40,13 @@ body {
   width: max-content;
   animation: marquee 70s linear infinite;
 }
+
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
