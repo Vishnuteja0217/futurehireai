@@ -296,7 +296,7 @@ const fetchJDFromUrl = async () => {
 </p>
 
 <div className="mb-8 w-full overflow-hidden border-y border-white/10 bg-white/5 py-3 backdrop-blur-md">
-<div className="animate-marquee flex whitespace-nowrap text-lg font-semibold tracking-wide text-gray-200">
+<div className="animate-marquee flex whitespace-nowrap text-sm sm:text-base font-medium tracking-wide text-gray-200">
   <span className="mx-8">
     Built from real job-market struggles — not from theory • ATS Optimization • Interview Preparation • JD Intelligence • Resume Tailoring • Career Guidance • Affordable AI Career Support Built To Help Candidates Become Truly Interview-Ready
   </span>

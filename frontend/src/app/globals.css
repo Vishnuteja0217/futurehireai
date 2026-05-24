@@ -38,5 +38,5 @@ body {
 .animate-marquee {
   display: flex;
   width: max-content;
-  animation: marquee 45s linear infinite;
+  animation: marquee 70s linear infinite;
 }
