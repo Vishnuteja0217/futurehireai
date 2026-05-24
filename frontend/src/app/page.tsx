@@ -340,7 +340,7 @@ const fetchJDFromUrl = async () => {
   <div className="mt-10 grid w-full max-w-5xl grid-cols-1 gap-4 md:grid-cols-[220px_1fr_220px]">
 
 {resume ? (
-  <label className="flex h-16 cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 text-center text-green-400 backdrop-blur-md hover:bg-white/10 transition-all duration-300 overflow-hidden">
+  <label className="flex h-16 cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 text-center text-blue-300 backdrop-blur-md hover:bg-white/10 transition-all duration-300 overflow-hidden">
   <span className="max-w-full truncate">
     {resume.name}
   </span>
@@ -586,7 +586,7 @@ const fetchJDFromUrl = async () => {
 
         {feedbackByQuestion[currentQuestionIndex] && (
           <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-6">
-            <h3 className="mb-4 text-xl font-bold text-pink-400">
+            <h3 className="mb-4 text-xl font-bold text-blue-300">
               Interview Feedback
             </h3>
 

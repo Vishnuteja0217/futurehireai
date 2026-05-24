@@ -150,7 +150,7 @@ Job Description:
 def compare_resume_jd(data: ResumeJDRequest):
 
     prompt = f"""
-You are an experienced senior DevSecOps hiring manager interviewing this candidate for the role.
+You are an experienced senior hiring manager interviewing this candidate for the role.
 
 Do NOT summarize the resume.
 
@@ -163,8 +163,8 @@ Analyze:
 - what recruiter concerns exist
 - what the resume FAILS to prove
 - which JD expectations are insufficiently demonstrated
-- what technical depth interviewers will probe
-- what hidden expectations exist in this role
+- Technical depth concerns: identify areas where the candidate's resume looks shallow, incomplete, or vulnerable to deeper technical questioning. Explain what interviewers may probe further and why. Do NOT list generic skills.
+- Hidden role expectations: infer unstated expectations recruiters and hiring managers likely have based on the JD, role seniority, tech stack, and industry norms. Focus on ownership, execution, communication, reliability, production thinking, and collaboration.
 - what security/compliance gaps are visible
 - which resume bullets sound generic or low-impact
 - how the candidate could better position existing experience
@@ -214,6 +214,10 @@ Rules:
 - initial_ats_reasoning should explain the score using concise bullet points
 - Base initial ATS score on keyword alignment, role relevance, experience depth, missing JD requirements, and resume clarity
 - Do not inflate the score unrealistically
+- For technical_depth_concerns, each item must explain WHY it is a concern, not just name a technology.
+- For hidden_role_expectations, each item must describe an inferred expectation that is not directly stated in the JD.
+- Avoid generic keyword lists.
+- Write like a skeptical hiring manager giving useful private feedback.
 
 Resume:
 {data.resume_text}
