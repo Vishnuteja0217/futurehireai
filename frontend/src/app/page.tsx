@@ -42,7 +42,7 @@ let finalJobDescription = jobDescription;
 if (jobDescription.trim().startsWith("http")) {
   setFetchingJD(true);
 
-  const jdResponse = await fetch("http://127.0.0.1:8000/extract-jd-from-url", {
+  const jdResponse = await fetch("https://futurehireai.onrender.com/extract-jd-from-url", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -69,7 +69,7 @@ if (jobDescription.trim().startsWith("http")) {
     formData.append("file", resume);
 
     const uploadResponse = await fetch(
-      "http://127.0.0.1:8000/upload-resume",
+      "https://futurehireai.onrender.com/upload-resume",
       {
         method: "POST",
         body: formData,
@@ -80,7 +80,7 @@ if (jobDescription.trim().startsWith("http")) {
 
     // Compare resume with JD
     const compareResponse = await fetch(
-      "http://127.0.0.1:8000/compare-resume-jd",
+      "https://futurehireai.onrender.com/compare-resume-jd",
       {
         method: "POST",
         headers: {
@@ -164,7 +164,7 @@ const getAnswerFeedback = async () => {
 
     const question = analysis[11]?.items?.[currentQuestionIndex];
 
-    const response = await fetch("http://127.0.0.1:8000/evaluate-answer", {
+    const response = await fetch("https://futurehireai.onrender.com/evaluate-answer", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -206,14 +206,14 @@ const generateTailoredResume = async () => {
     const formData = new FormData();
     formData.append("file", resume);
 
-    const uploadResponse = await fetch("http://127.0.0.1:8000/upload-resume", {
+    const uploadResponse = await fetch("https://futurehireai.onrender.com/upload-resume", {
       method: "POST",
       body: formData,
     });
 
     const uploadData = await uploadResponse.json();
 
-    const response = await fetch("http://127.0.0.1:8000/generate-tailored-resume", {
+    const response = await fetch("https://futurehireai.onrender.com/generate-tailored-resume", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -244,7 +244,7 @@ const fetchJDFromUrl = async () => {
       return;
     }
 
-    const response = await fetch("http://127.0.0.1:8000/extract-jd-from-url", {
+    const response = await fetch("https://futurehireai.onrender.com/extract-jd-from-url", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -721,7 +721,7 @@ const fetchJDFromUrl = async () => {
                     onClick={async () => {
                       setDownloadLoading("word");
                       const response = await fetch(
-                        "http://127.0.0.1:8000/download-tailored-resume-docx",
+                        "https://futurehireai.onrender.com/download-tailored-resume-docx",
                         {
                           method: "POST",
                           headers: {
@@ -755,7 +755,7 @@ const fetchJDFromUrl = async () => {
                     onClick={async () => {
                       setDownloadLoading("pdf");
                       const response = await fetch(
-                        "http://127.0.0.1:8000/download-tailored-resume-pdf",
+                        "https://futurehireai.onrender.com/download-tailored-resume-pdf",
                         {
                           method: "POST",
                           headers: {
