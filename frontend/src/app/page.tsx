@@ -527,27 +527,27 @@ const fetchJDFromUrl = async () => {
       ))}
     </div>
 
-    <div className="space-y-8">
-      {activeTab === "overview" &&
-        analysis.slice(0, 4).map((section: any, index: number) => (
-          <AnalysisCard key={index} section={section} color="text-blue-400" />
-        ))}
+   <div className="space-y-8">
+  {activeTab === "overview" &&
+    analysis.slice(0, 4).map((section: any, index: number) => (
+      <AnalysisCard key={index} section={section} color="text-blue-300" />
+    ))}
 
-      {activeTab === "resume" &&
-        analysis.slice(4, 7).map((section: any, index: number) => (
-          <AnalysisCard key={index} section={section} color="text-purple-400" />
-        ))}
+  {activeTab === "resume" &&
+    analysis.slice(4, 7).map((section: any, index: number) => (
+      <AnalysisCard key={index} section={section} color="text-blue-300" />
+    ))}
 
-   {activeTab === "prep" &&
-  analysis.slice(7, 11).map((section: any, index: number) => (
-    <AnalysisCard key={index} section={section} color="text-green-400" />
-  ))}
+  {activeTab === "prep" &&
+    analysis.slice(7, 11).map((section: any, index: number) => (
+      <AnalysisCard key={index} section={section} color="text-blue-300" />
+    ))}
 
-{activeTab === "mock" && (
-  <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-    <h2 className="mb-4 text-2xl font-semibold text-pink-400">
-      Mock Interview
-    </h2>
+  {activeTab === "mock" && (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <h2 className="mb-4 text-2xl font-semibold text-blue-300">
+        Mock Interview
+      </h2>
 
     <p className="mb-6 text-gray-300">
       Practice answering one recruiter-style question at a time.
