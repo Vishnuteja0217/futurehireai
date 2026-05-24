@@ -870,14 +870,8 @@ const fetchJDFromUrl = async () => {
         </div>
       </section>
 
-    <footer className="relative z-10 mt-24 border-t border-white/10 px-6 py-10 text-center">
-            <p className="text-sm text-gray-400">
-              AI Career Copilot — Built to help candidates prepare smarter, not just apply faster.
-            </p>
-
-            <p className="mt-3 text-xs text-gray-500">
-             Early Beta • More AI-powered features launching soon
-            </p>
+    <footer className="relative z-10 border-t border-white/10 px-6 py-6 text-center text-sm text-gray-500">
+  © {new Date().getFullYear()} FutureHireAI. All rights reserved.
     </footer>
 
     </main>
