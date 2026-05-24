@@ -142,6 +142,8 @@ Job Description:
         response.choices[0].message.content
     )
 
+    print(parsed_response)
+
     return parsed_response
 
 @app.post("/compare-resume-jd")
