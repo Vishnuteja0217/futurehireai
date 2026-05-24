@@ -281,7 +281,10 @@ const fetchJDFromUrl = async () => {
           FutureHire AI
         </h1>
 
-        <button className="rounded-full border border-white/20 px-5 py-2 text-sm hover:bg-white hover:text-black transition-all duration-300">
+        <button
+          onClick={() => alert("More AI-powered features launching soon")}
+          className="rounded-full border border-white/20 px-5 py-2 text-sm text-gray-200 hover:bg-white/10 transition-all"
+        >
           Join Beta
         </button>
       </nav>
