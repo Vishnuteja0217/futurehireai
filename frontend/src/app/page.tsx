@@ -362,7 +362,7 @@ const fetchJDFromUrl = async () => {
         </p>
 
         <div className="mt-4 rounded-full border border-yellow-500/20 bg-yellow-500/10 px-4 py-2 text-xs sm:text-sm text-yellow-200 backdrop-blur-xl">
-          Early Beta Access • First 5 analyses free
+          Early Beta Access 
         </div>
 
         {/* CTA Buttons */}
@@ -452,6 +452,18 @@ const fetchJDFromUrl = async () => {
   <h3 className="text-sm font-semibold text-gray-400">
     ATS Match
   </h3>
+
+  {initialAtsScore !== null ? (
+  <div className="mt-2 flex items-center justify-center gap-2">
+    <p className="text-4xl font-black text-white">
+      {initialAtsScore}%
+    </p>
+  </div>
+) : (
+  <p className="text-sm text-gray-500 mt-2">
+    Pending
+  </p>
+)}
 
   {initialAtsScore !== null ? (
     <div className="mt-2 flex items-center justify-center gap-2">
