@@ -138,13 +138,6 @@ Job Description:
         ]
     )
 
-    parsed_response = json.loads(
-        response.choices[0].message.content
-    )
-
-    print(parsed_response)
-
-    return parsed_response
 
 @app.post("/compare-resume-jd")
 def compare_resume_jd(data: ResumeJDRequest):
@@ -322,6 +315,8 @@ Candidate Answer:
     parsed_response = json.loads(
         response.choices[0].message.content
     )
+
+    print(parsed_response)
 
     return parsed_response
 
