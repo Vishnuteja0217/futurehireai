@@ -4,22 +4,47 @@ import { useState } from "react";
 
 export default function Home() {
   const [resume, setResume] = useState<File | null>(null);
+
   const [jobDescription, setJobDescription] = useState("");
+
   const [jdUrl, setJdUrl] = useState("");
-  const [fetchingJD, setFetchingJD] = useState(false);  const [analysis, setAnalysis] = useState<any[]>([]);
+
+  const [fetchingJD, setFetchingJD] = useState(false);
+
+  const [analysis, setAnalysis] = useState<any[]>([]);
+
+  const [matchScore, setMatchScore] = useState<number | null>(null);
+
+  const [recruiterConfidence, setRecruiterConfidence] = useState("");
+
+  const [recruiterVerdict, setRecruiterVerdict] = useState("");
+
   const [loading, setLoading] = useState(false);
+
   const [activeTab, setActiveTab] = useState("overview");
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
   const [mockAnswers, setMockAnswers] = useState<{ [key: number]: string }>({});
+
   const [feedbackByQuestion, setFeedbackByQuestion] = useState<{ [key: number]: any }>({});
+
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+
   const [tailoredResume, setTailoredResume] = useState<any>(null);
+
   const [tailoringLoading, setTailoringLoading] = useState(false);
+
   const [initialAtsScore, setInitialAtsScore] = useState<number | null>(null);
+
   const [initialAtsReasoning, setInitialAtsReasoning] = useState<string[]>([]);
+
   const [showJDModal, setShowJDModal] = useState(false);
+
   const [showAtsModal, setShowAtsModal] = useState(false);
+
   const [showDownloadOptions, setShowDownloadOptions] = useState(false);
+
   const [downloadLoading, setDownloadLoading] = useState("");
 
 const analyzeJD = async () => {
@@ -177,6 +202,10 @@ const getAnswerFeedback = async () => {
     });
 
     const data = await response.json();
+
+    setMatchScore(data.match_score || null);
+    setRecruiterConfidence(data.recruiter_confidence || "");
+    setRecruiterVerdict(data.recruiter_verdict || "");
 
     setFeedbackByQuestion({
       ...feedbackByQuestion,
@@ -503,6 +532,34 @@ const fetchJDFromUrl = async () => {
     <h2 className="mb-8 text-3xl font-bold text-white">
       AI Analysis
     </h2>
+
+    <div className="mb-8 grid gap-4 md:grid-cols-3">
+
+  <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-blue-600/20 to-purple-600/20 p-6">
+    <p className="text-sm text-gray-300">ATS Match Score</p>
+
+    <h3 className="mt-2 text-4xl font-bold text-white">
+      {matchScore ? `${matchScore}/100` : "--"}
+    </h3>
+  </div>
+
+  <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <p className="text-sm text-gray-300">Recruiter Confidence</p>
+
+    <h3 className="mt-2 text-2xl font-semibold text-blue-300">
+      {recruiterConfidence || "Pending"}
+    </h3>
+  </div>
+
+  <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <p className="text-sm text-gray-300">Recruiter Verdict</p>
+
+    <p className="mt-2 text-sm leading-7 text-gray-200">
+      {recruiterVerdict || "Generating recruiter assessment..."}
+    </p>
+  </div>
+
+</div>
 
     <div className="mb-8 flex flex-wrap gap-4">
       {[
