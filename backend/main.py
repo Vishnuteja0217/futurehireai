@@ -253,6 +253,15 @@ Job Description:
         response.choices[0].message.content
     )
 
+    if "match_score" not in parsed_response:
+        parsed_response["match_score"] = parsed_response.get("initial_ats_score", 0)
+
+    if "recruiter_confidence" not in parsed_response:
+        parsed_response["recruiter_confidence"] = "Medium"
+
+    if "recruiter_verdict" not in parsed_response:
+        parsed_response["recruiter_verdict"] = "Resume analyzed successfully. Review the detailed insights below."
+
     return parsed_response
 
 @app.post("/evaluate-answer")

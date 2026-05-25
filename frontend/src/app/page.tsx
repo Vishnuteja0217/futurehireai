@@ -446,31 +446,6 @@ const fetchJDFromUrl = async () => {
     </button>
   </div>
 
-<div className="flex h-16 flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 backdrop-blur-md"> 
- 
- <>
-  <h3 className="text-sm font-semibold text-gray-400">
-    ATS Match
-  </h3>
-
-  {initialAtsScore !== null ? (
-    <div className="mt-2 flex items-center justify-center gap-2">
-      <p className="text-4xl font-black text-white">
-        {initialAtsScore}%
-      </p>
-
-      <button
-        onClick={() => setShowAtsModal(true)}
-        className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-xs text-gray-400 hover:bg-white/10 hover:text-white"
-      >
-        ?
-      </button>
-    </div>
-  ) : null}
-    
-</>
-
-  </div>
 </div>
 
 {showJDModal && (
