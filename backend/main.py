@@ -168,13 +168,12 @@ Provide deep recruiter insight.
 
 Return ONLY valid JSON.
 
+The JSON response MUST include match_score, recruiter_confidence, and recruiter_verdict at the top level.
+
 Format:
 
-{{
-  "detected_role": "",
-  "initial_ats_score": 0,
-  "initial_ats_reasoning": [],
-  "match_score": "",
+{
+  "match_score": 0,
   "recruiter_confidence": "",
   "recruiter_verdict": "",
   "top_strengths": [],
@@ -185,9 +184,19 @@ Format:
   "hidden_role_expectations": [],
   "resume_bullet_improvements": [],
   "high_priority_study_areas": [],
-  "likely_interviewer_focus_areas": []
-  "scenario_based_questions": []
-}}
+  "likely_interviewer_focus_areas": [],
+  "scenario_based_questions": [],
+  "common_interview_questions": [],
+  "mock_interview_questions": []
+}
+
+- match_score must be an integer from 0-100.
+- recruiter_confidence must be one of:
+  Low
+  Medium
+  Medium-High
+  High
+- recruiter_verdict must be a concise recruiter-style evaluation.
 
 Rules:
 - Be brutally realistic
