@@ -181,6 +181,9 @@ Format:
   "detected_role": "",
   "initial_ats_score": 0,
   "initial_ats_reasoning": [],
+  "match_score": "",
+  "recruiter_confidence": "",
+  "recruiter_verdict": "",
   "top_strengths": [],
   "critical_gaps": [],
   "recruiter_concerns": [],
@@ -218,6 +221,10 @@ Rules:
 - For hidden_role_expectations, each item must describe an inferred expectation that is not directly stated in the JD.
 - Avoid generic keyword lists.
 - Write like a skeptical hiring manager giving useful private feedback.
+- match_score should be a realistic ATS/recruiter alignment score from 0-100.
+- recruiter_confidence should be one of: Low, Medium, Medium-High, High.
+- recruiter_verdict should sound like a real recruiter summary, balancing strengths and concerns honestly.
+- Strong resumes should receive positive reinforcement instead of unnecessary criticism.
 
 Resume:
 {data.resume_text}
