@@ -465,21 +465,13 @@ const fetchJDFromUrl = async () => {
   </p>
 )}
 
-  {initialAtsScore !== null ? (
-    <div className="mt-2 flex items-center justify-center gap-2">
-      <p className="text-4xl font-black text-white">
-        {initialAtsScore}%
-      </p>
-
       <button
         onClick={() => setShowAtsModal(true)}
         className="flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-xs text-gray-400 hover:bg-white/10 hover:text-white"
       >
         ?
       </button>
-    </div>
-  ) : null}
-    
+      
 </>
 
   </div>
