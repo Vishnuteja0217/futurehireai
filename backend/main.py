@@ -172,7 +172,7 @@ The JSON response MUST include match_score, recruiter_confidence, and recruiter_
 
 Format:
 
-{
+{{
   "match_score": 0,
   "recruiter_confidence": "",
   "recruiter_verdict": "",
@@ -188,7 +188,7 @@ Format:
   "scenario_based_questions": [],
   "common_interview_questions": [],
   "mock_interview_questions": []
-}
+}}
 
 - match_score must be an integer from 0-100.
 - recruiter_confidence must be one of:
