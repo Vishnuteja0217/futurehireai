@@ -353,24 +353,36 @@ ATS scoring rules:
 - Do not inflate scores unrealistically
 - Base scores on keyword alignment, role relevance, experience depth, resume clarity, and missing JD requirements
 - ats_score_reasoning should explain why the score increased or why it is limited
+- projected_ats_score_after_tailoring must reflect realistic improvement after tailoring.
+- A score above 90 is allowed only when the resume strongly supports the JD requirements.
+- If the score is below 90, clearly explain what prevents it from reaching 90.
+- Do not reward keyword stuffing.
+- Reward truthful role alignment, measurable impact, technical specificity, and strong formatting.
 
-Resume tailoring rules:
-- Generate a complete tailored resume based on the candidate's real resume
-- The resume should be optimized for the JD
-- Aim for ATS score above 85 if the candidate's real experience supports it
-- Do NOT invent fake experience, fake tools, fake companies, fake projects, or fake metrics
-- If a requirement is missing, reframe related real experience honestly
-- The tailored_resume field should contain the full resume text with sections like:
+Resume tailoring rules: 
+- Generate a complete tailored resume based only on the candidate's real resume.
+- The resume must be highly optimized for the JD while staying truthful.
+- Aim for a projected ATS score between 85 and 95 when the candidate's real experience supports it.
+- Do NOT force a 90+ score if the candidate lacks major required experience.
+- Do NOT invent fake experience, fake tools, fake companies, fake projects, fake metrics, fake certifications, or fake dates.
+- If a requirement is missing, honestly reframe related real experience without pretending direct experience.
+- Strengthen bullets using action + technology + business/technical impact.
+- Add JD-relevant keywords naturally, not as keyword stuffing.
+- Prioritize recruiter readability, ATS parsing, measurable impact, and interview defensibility.
+- Remove weak filler phrases such as responsible for, worked on, helped with, familiar with.
+- If the candidate is already strong, say the resume is strong and optimize toward perfection instead of creating fake weaknesses.
+- If the candidate is weak for the JD, be honest and improve what can realistically be improved.
+- The tailored_resume field should contain the full resume text with these sections only when supported by the original resume:
   Contact
   Professional Summary
-  Skills
+  Technical Skills
   Professional Experience
   Projects
   Education
   Certifications
-- Make the resume clean, modern, and recruiter-friendly
 - Do NOT include a Certifications section unless the original resume explicitly contains real certifications.
 - Do NOT write planned, in progress, recommended, future, or suggested certifications.
+- The final resume should look recruiter-ready, modern, concise, and strong enough for direct application.
 
 Candidate Resume:
 {data.resume_text}
