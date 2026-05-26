@@ -448,22 +448,16 @@ const fetchJDFromUrl = async () => {
 
 <div className="flex h-16 flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 backdrop-blur-md"> 
  
- <>
+<>
   <h3 className="text-sm font-semibold text-gray-400">
-    ATS Match
+    ATS
   </h3>
 
   {initialAtsScore !== null ? (
-  <div className="mt-2 flex items-center justify-center gap-2">
-    <p className="text-4xl font-black text-white">
-      {initialAtsScore}%
-    </p>
-  </div>
-) : (
-  <p className="text-sm text-gray-500 mt-2">
-    Pending
-  </p>
-)}
+    <div className="mt-2 flex items-center justify-center gap-2">
+      <p className="text-4xl font-black text-white">
+        {initialAtsScore}%
+      </p>
 
       <button
         onClick={() => setShowAtsModal(true)}
@@ -471,7 +465,8 @@ const fetchJDFromUrl = async () => {
       >
         ?
       </button>
-      
+    </div>
+  ) : null}
 </>
 
   </div>
