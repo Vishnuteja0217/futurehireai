@@ -1,0 +1,97 @@
+// All API calls live here. UI components never fetch directly.
+// Makes it easy to swap endpoints, add error handling, retry logic, or
+// move to a real client (React Query, SWR) later.
+
+import { API_BASE_URL } from "./constants";
+import type {
+  AnswerFeedback,
+  CompareResumeResponse,
+  TailoredResume,
+} from "./types";
+
+async function postJSON<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`API ${path} failed with ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function uploadResume(file: File): Promise<{ resume_text: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE_URL}/upload-resume`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error(`Resume upload failed with ${res.status}`);
+  return res.json();
+}
+
+export function extractJDFromUrl(url: string) {
+  return postJSON<{ job_description?: string }>("/extract-jd-from-url", { url });
+}
+
+export function compareResumeJD(resume_text: string, job_description: string) {
+  return postJSON<CompareResumeResponse>("/compare-resume-jd", {
+    resume_text,
+    job_description,
+  });
+}
+
+export function evaluateAnswer(
+  question: string,
+  answer: string,
+  job_description: string,
+) {
+  return postJSON<AnswerFeedback>("/evaluate-answer", {
+    question,
+    answer,
+    job_description,
+  });
+}
+
+export function generateTailoredResume(
+  resume_text: string,
+  job_description: string,
+) {
+  return postJSON<TailoredResume>("/generate-tailored-resume", {
+    resume_text,
+    job_description,
+  });
+}
+
+/**
+ * Triggers a browser download for a generated resume.
+ * Keeps blob-handling out of components.
+ */
+export async function downloadTailoredResume(
+  format: "docx" | "pdf",
+  tailored_resume: string,
+) {
+  const endpoint =
+    format === "docx"
+      ? "/download-tailored-resume-docx"
+      : "/download-tailored-resume-pdf";
+
+  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tailored_resume }),
+  });
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `tailored_resume.${format}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
