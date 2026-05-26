@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import Link from "next/link";
 
 export function CTA() {
   return (
@@ -26,12 +27,13 @@ export function CTA() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a
-              href="#upload"
+
+              <Link
+              href="/app"
               className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
             >
               Try Beta Free
-            </a>
+            </Link>
             <a
               href="#features"
               className="rounded-xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
