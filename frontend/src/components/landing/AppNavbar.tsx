@@ -1,8 +1,10 @@
 "use client";
 
+import { Show, UserButton } from "@clerk/nextjs";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 
+// Navbar for /app routes. Logo + Home button + user avatar (if signed in).
 export function AppNavbar() {
   return (
     <nav className="sticky top-0 z-40 border-b border-slate-200/60 bg-white/70 backdrop-blur-xl">
@@ -16,13 +18,19 @@ export function AppNavbar() {
           </span>
         </Link>
 
-        <Link
-          href="/"
-          className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Home
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Home
+          </Link>
+
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
+        </div>
       </div>
     </nav>
   );
