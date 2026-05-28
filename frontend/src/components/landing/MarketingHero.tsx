@@ -14,14 +14,14 @@ export function MarketingHero() {
             <Sparkles className="h-3.5 w-3.5" />
             AI-Powered Career Intelligence - Beta
           </div>
-          <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-slate-900 sm:text-5xl md:text-6xl lg:text-7xl">
-            Your AI Copilot for{" "}
+          <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+            Most tools stop at your resume.{" "}
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
-              Career Growth.
+              We get you interview-ready.
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg md:leading-8">
-            Optimize your resume, prepare for interviews, improve ATS scores, and generate tailored career insights - all from one intelligent platform.
+            AI checks your resume against any job, shows you why you'd get rejected, fixes it, and preps you for the interview — all in one place.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-slate-600">
             <div className="flex items-center gap-2">

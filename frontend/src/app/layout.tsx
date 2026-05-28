@@ -11,9 +11,9 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "FutureHireAI — Your AI Copilot for Career Growth",
+  title: "FutureHireAI — Get Interview-Ready, Not Just Resume-Ready",
   description:
-    "Optimize your resume, prepare for interviews, improve ATS scores, and generate tailored career insights — all from one AI-powered platform.",
+    "AI checks your resume against any job, shows you why you'd get rejected, fixes it, and preps you for the interview — all in one place.",
 };
 
 export default function RootLayout({
