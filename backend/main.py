@@ -464,6 +464,66 @@ Job Description:
 
     return parsed_response
 
+@app.post("/generate-cover-letter")
+def generate_cover_letter(data: ResumeJDRequest):
+
+    prompt = f"""
+You are an expert career writer and technical recruiter.
+
+Your job is to write a tailored, professional cover letter for the candidate
+based on their real resume and the target job description.
+
+VERY IMPORTANT RULES:
+- Do NOT invent fake experience, skills, companies, projects, or metrics.
+- Only use what is genuinely supported by the candidate's resume.
+- Match the tone to a modern, confident, professional job application.
+- Keep it concise: 3 to 4 short paragraphs, under 350 words.
+- Open with genuine interest in the specific role/company.
+- Middle paragraphs connect the candidate's REAL experience to the JD's needs.
+- Close with a confident call to action.
+- Avoid clichés like "I am writing to apply", "team player", "hard worker".
+- Avoid generic filler. Be specific to this candidate and this job.
+- Do NOT include placeholder text like [Company Name] or [Your Name] —
+  if a detail is unknown, write naturally around it.
+
+Return ONLY valid JSON.
+
+Format:
+
+{{
+  "cover_letter": ""
+}}
+
+The cover_letter field should contain the full cover letter as clean text,
+with paragraphs separated by blank lines. No markdown, no bullet points.
+
+Candidate Resume:
+{data.resume_text}
+
+Job Description:
+{data.job_description}
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an expert career writer and technical recruiter who writes honest, specific, compelling cover letters."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    parsed_response = json.loads(
+        response.choices[0].message.content
+    )
+
+    return parsed_response
+
 @app.post("/extract-jd-from-url")
 async def extract_jd_from_url(data: dict):
     try:
@@ -609,6 +669,50 @@ def download_tailored_resume_docx(data: dict):
         file_path,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename="tailored_resume.docx"
+    )
+
+@app.post("/download-cover-letter-docx")
+def download_cover_letter_docx(data: dict):
+    cover_letter = data.get("cover_letter", "")
+
+    file_id = str(uuid.uuid4())
+    file_path = f"cover_letter_{file_id}.docx"
+
+    doc = Document()
+
+    section = doc.sections[0]
+    section.top_margin = Inches(0.8)
+    section.bottom_margin = Inches(0.8)
+    section.left_margin = Inches(0.9)
+    section.right_margin = Inches(0.9)
+
+    styles = doc.styles
+    normal_style = styles["Normal"]
+    normal_style.font.name = "Calibri"
+    normal_style.font.size = Pt(11)
+
+    paragraphs = cover_letter.split("\n")
+
+    for line in paragraphs:
+        clean_line = line.strip()
+
+        if not clean_line:
+            continue
+
+        p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(10)
+        p.paragraph_format.line_spacing = 1.3
+
+        run = p.add_run(clean_line)
+        run.font.size = Pt(11)
+        run.font.color.rgb = RGBColor(31, 41, 55)
+
+    doc.save(file_path)
+
+    return FileResponse(
+        file_path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename="cover_letter.docx"
     )
 
 @app.post("/download-tailored-resume-pdf")
@@ -773,4 +877,60 @@ def download_tailored_resume_pdf(data: dict):
         file_path,
         media_type="application/pdf",
         filename="tailored_resume.pdf"
+    )
+
+@app.post("/download-cover-letter-pdf")
+def download_cover_letter_pdf(data: dict):
+    cover_letter = data.get("cover_letter", "")
+
+    file_id = str(uuid.uuid4())
+    file_path = f"cover_letter_{file_id}.pdf"
+
+    doc = SimpleDocTemplate(
+        file_path,
+        pagesize=letter,
+        rightMargin=64,
+        leftMargin=64,
+        topMargin=58,
+        bottomMargin=58,
+    )
+
+    styles = getSampleStyleSheet()
+
+    letter_style = ParagraphStyle(
+        "CoverLetterStyle",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=11,
+        leading=16,
+        textColor="#1F2937",
+        spaceAfter=11,
+    )
+
+    story = []
+
+    paragraphs = cover_letter.split("\n")
+
+    for line in paragraphs:
+        clean_line = line.strip()
+
+        if not clean_line:
+            story.append(Spacer(1, 6))
+            continue
+
+        safe_line = (
+            clean_line
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+        )
+
+        story.append(Paragraph(safe_line, letter_style))
+
+    doc.build(story)
+
+    return FileResponse(
+        file_path,
+        media_type="application/pdf",
+        filename="cover_letter.pdf"
     )
