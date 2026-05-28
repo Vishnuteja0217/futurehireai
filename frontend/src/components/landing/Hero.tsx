@@ -1,19 +1,23 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import {
   BarChart3,
   CheckCircle2,
   FileUp,
+  Info,
   Sparkles,
   Target,
 } from "lucide-react";
 
 import { useResumeAnalysis } from "@/contexts/ResumeAnalysisContext";
+import { useSignedInTrialCount } from "@/lib/useSignedInTrialCount";
+import { useTrialCount } from "@/lib/useTrialCount";
 
 // The hero IS the demo: rather than show a fake dashboard preview like the
 // reference mockup, we put the real upload + analyze card front and centre.
 // Testers can use the product without scrolling.
-export function Hero({ onShowJD, onShowAts }: HeroProps) {
+export function Hero({ onShowJD, onShowAts, onShowLimit }: HeroProps) {
   const {
     resume,
     setResume,
@@ -24,6 +28,37 @@ export function Hero({ onShowJD, onShowAts }: HeroProps) {
     initialAtsScore,
     analyzeJD,
   } = useResumeAnalysis();
+
+// Auth + trial state
+  const { isSignedIn, isLoaded } = useUser();
+
+  // Anonymous counter (browser localStorage, 3 lifetime trials)
+  const anon = useTrialCount();
+
+  // Signed-in counter (Clerk metadata, 5/day, auto-resets at midnight UTC)
+  const signed = useSignedInTrialCount();
+
+  // Pick the right counter for the current auth state
+  const trialsRemaining = isSignedIn ? signed.usageRemaining : anon.trialsRemaining;
+  const limit = isSignedIn ? signed.limit : 3;
+  const hasReachedLimit = isSignedIn ? signed.hasReachedLimit : anon.hasReachedLimit;
+  const hydrated = isSignedIn ? signed.hydrated : anon.hydrated;
+
+  const isBlocked = isLoaded && hydrated && hasReachedLimit;
+
+  // Wrapper that bumps the correct counter on each successful analyze.
+  const handleAnalyze = async () => {
+    if (isBlocked) {
+      onShowLimit();
+      return;
+    }
+    await analyzeJD();
+    if (isSignedIn) {
+      await signed.incrementUsage();
+    } else {
+      anon.incrementTrial();
+    }
+  };
 
   const analyzeLabel = fetchingJD
     ? "Fetching JD..."
@@ -76,10 +111,34 @@ export function Hero({ onShowJD, onShowAts }: HeroProps) {
           </div>
         </div>
 
+    {/* Trial badge — different messaging for anonymous vs signed-in users */}
+        {isLoaded && hydrated && (
+          <div className="mx-auto mt-10 flex max-w-5xl items-center justify-center">
+            <div
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold ${
+                hasReachedLimit
+                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                  : trialsRemaining === 1
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-blue-200 bg-blue-50 text-blue-700"
+              }`}
+            >
+              <Info className="h-3.5 w-3.5" />
+              {isSignedIn
+                ? hasReachedLimit
+                  ? "Daily limit reached — Pro coming soon"
+                  : `${trialsRemaining} of ${limit} analyses left today`
+                : hasReachedLimit
+                  ? "Free trials used — sign up for 5/day"
+                  : `${trialsRemaining} of 3 free trials remaining`}
+            </div>
+          </div>
+        )}
+
         {/* Upload + JD card */}
         <div
           id="upload"
-          className="mx-auto mt-12 w-full max-w-5xl rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/5 md:p-6"
+          className="mx-auto mt-4 w-full max-w-5xl rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/5 md:p-6"
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-[220px_1fr_180px]">
             {/* Resume upload slot */}
@@ -140,11 +199,15 @@ export function Hero({ onShowJD, onShowAts }: HeroProps) {
 
               <button
                 type="button"
-                onClick={analyzeJD}
+                onClick={handleAnalyze}
                 disabled={loading || fetchingJD}
-                className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-blue-400"
+                className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
               >
-                {analyzeLabel}
+                {isBlocked
+                  ? isSignedIn
+                    ? "Come back tomorrow"
+                    : "Sign up to continue"
+                  : analyzeLabel}
               </button>
             </div>
           </div>
@@ -161,6 +224,7 @@ export function Hero({ onShowJD, onShowAts }: HeroProps) {
 interface HeroProps {
   onShowJD: () => void;
   onShowAts: () => void;
+  onShowLimit: () => void;
 }
 
 function TrustBadge({

@@ -12,6 +12,15 @@ export function AtsModal({
 }) {
   const { initialAtsScore, initialAtsReasoning } = useResumeAnalysis();
 
+ // Defensive normalization: backend sometimes returns string or null instead of array.
+  // Cast through `unknown` because the type says string[] but real data can vary.
+  const raw = initialAtsReasoning as unknown;
+  const reasoningList: string[] = Array.isArray(raw)
+    ? raw
+    : typeof raw === "string" && raw.trim()
+      ? [raw]
+      : [];
+
   return (
     <Modal open={open} onClose={onClose} title="Why This ATS Score?">
       <div className="mb-6 flex items-baseline gap-2">
@@ -22,17 +31,15 @@ export function AtsModal({
       </div>
 
       <div className="space-y-3">
-        {initialAtsReasoning.length === 0 && (
+        {reasoningList.length === 0 ? (
           <p className="text-sm text-slate-500">No reasoning provided yet.</p>
+        ) : (
+          reasoningList.map((item, i) => (
+            <p key={i} className="text-sm leading-7 text-slate-700">
+              • {item}
+            </p>
+          ))
         )}
-        {initialAtsReasoning.map((item, i) => (
-          <p
-            key={i}
-            className="text-sm leading-7 text-slate-700"
-          >
-            • {item}
-          </p>
-        ))}
       </div>
     </Modal>
   );
