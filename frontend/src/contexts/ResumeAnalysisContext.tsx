@@ -18,6 +18,7 @@ import {
   compareResumeJD,
   evaluateAnswer,
   extractJDFromUrl,
+  generateCoverLetter,
   generateTailoredResume,
   uploadResume,
 } from "@/lib/api";
@@ -30,8 +31,10 @@ import type {
 interface ResumeAnalysisContextValue {
   // Inputs
   resume: File | null;
+  resumeText: string;  // cached parsed text from the last upload (shared across pages)
   jobDescription: string;
   setResume: (f: File | null) => void;
+  setResumeText: (v: string) => void;
   setJobDescription: (v: string) => void;
 
   // Analysis output
@@ -54,6 +57,12 @@ interface ResumeAnalysisContextValue {
 
   // Tailored resume
   tailoredResume: TailoredResume | null;
+
+  // Cover letter
+  coverLetter: string | null;
+  coverLetterLoading: boolean;
+  generateCoverLetterAction: () => Promise<void>;
+  clearCoverLetter: () => void;
 
   // Actions
   analyzeJD: () => Promise<void>;
@@ -88,6 +97,10 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
     null,
   );
 
+  const [resumeText, setResumeText] = useState<string>("");
+  const [coverLetter, setCoverLetter] = useState<string | null>(null);
+  const [coverLetterLoading, setCoverLetterLoading] = useState(false);
+
   const setMockAnswer = useCallback((index: number, value: string) => {
     setMockAnswers((prev) => ({ ...prev, [index]: value }));
   }, []);
@@ -115,6 +128,7 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       }
 
       const { resume_text } = await uploadResume(resume);
+      setResumeText(resume_text);  // cache for cover letter + tailored resume pages
       const data = await compareResumeJD(resume_text, finalJD);
 
       setInitialAtsScore(data.initial_ats_score ?? null);
@@ -204,6 +218,7 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
     try {
       setTailoringLoading(true);
       const { resume_text } = await uploadResume(resume);
+      setResumeText(resume_text);  // cache for reuse
       const data = await generateTailoredResume(resume_text, jobDescription);
       setTailoredResume(data);
     } catch (err) {
@@ -214,11 +229,47 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
     }
   }, [resume, jobDescription]);
 
+  // Cover letter generation.
+  // Tries to reuse cached resumeText (set by analyzeJD or generateTailored).
+  // Falls back to re-uploading if user came straight here without analyzing.
+  const generateCoverLetterAction = useCallback(async () => {
+    if (!resume && !resumeText) {
+      return alert("Please upload your resume first.");
+    }
+    if (!jobDescription.trim()) {
+      return alert("Please paste a job description first.");
+    }
+
+    try {
+      setCoverLetterLoading(true);
+
+      // Use cached text if available, otherwise upload + parse the file
+      let textToUse = resumeText;
+      if (!textToUse && resume) {
+        const { resume_text } = await uploadResume(resume);
+        setResumeText(resume_text);
+        textToUse = resume_text;
+      }
+
+      const data = await generateCoverLetter(textToUse, jobDescription);
+      setCoverLetter(data.cover_letter ?? "");
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong while generating your cover letter.");
+    } finally {
+      setCoverLetterLoading(false);
+    }
+  }, [resume, resumeText, jobDescription]);
+
+  const clearCoverLetter = useCallback(() => setCoverLetter(null), []);
+
   const value = useMemo<ResumeAnalysisContextValue>(
     () => ({
       resume,
+      resumeText,
       jobDescription,
       setResume,
+      setResumeText,
       setJobDescription,
       analysis,
       initialAtsScore,
@@ -233,12 +284,17 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       setMockAnswer,
       feedbackByQuestion,
       tailoredResume,
+      coverLetter,
+      coverLetterLoading,
+      generateCoverLetterAction,
+      clearCoverLetter,
       analyzeJD,
       getAnswerFeedback,
       generateTailored,
     }),
     [
       resume,
+      resumeText,
       jobDescription,
       analysis,
       initialAtsScore,
@@ -252,6 +308,10 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       setMockAnswer,
       feedbackByQuestion,
       tailoredResume,
+      coverLetter,
+      coverLetterLoading,
+      generateCoverLetterAction,
+      clearCoverLetter,
       analyzeJD,
       getAnswerFeedback,
       generateTailored,

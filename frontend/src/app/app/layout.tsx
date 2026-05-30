@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { AppMobileNav } from "@/components/layout/AppMobileNav";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { FeedbackButton } from "@/components/landing/FeedbackButton";
 import { ResumeAnalysisProvider } from "@/contexts/ResumeAnalysisContext";
@@ -85,6 +86,12 @@ export default function AppLayout({
         </div>
 
         <FeedbackButton />
+
+        {/* Mobile bottom nav (< 768px). Auto-hides on desktop via md:hidden. */}
+        <AppMobileNav
+          activePath={pathname}
+          isSignedIn={isSignedIn ?? false}
+        />
       </div>
     </ResumeAnalysisProvider>
   );

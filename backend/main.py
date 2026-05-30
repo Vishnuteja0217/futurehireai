@@ -466,6 +466,8 @@ Job Description:
 
 @app.post("/generate-cover-letter")
 def generate_cover_letter(data: ResumeJDRequest):
+    from datetime import datetime
+    today_formatted = datetime.now().strftime("%B %d, %Y")
 
     prompt = f"""
 You are an expert career writer and technical recruiter.
@@ -478,13 +480,24 @@ VERY IMPORTANT RULES:
 - Only use what is genuinely supported by the candidate's resume.
 - Match the tone to a modern, confident, professional job application.
 - Keep it concise: 3 to 4 short paragraphs, under 350 words.
-- Open with genuine interest in the specific role/company.
+- Begin with a professional header containing the candidate's REAL contact
+  information extracted from their resume: full name on the first line,
+  then a single contact line with email, phone, and LinkedIn (whatever
+  is actually present in the resume — omit anything missing, never invent).
+- After the header, add this exact date on its own line: {today_formatted}
+- Then write "Dear Hiring Manager," as the greeting (use the actual hiring
+  manager's name only if it appears in the job description).
+- Open the first paragraph with genuine interest in the specific role and
+  company — never with "I am writing to apply" or similar clichés.
 - Middle paragraphs connect the candidate's REAL experience to the JD's needs.
-- Close with a confident call to action.
-- Avoid clichés like "I am writing to apply", "team player", "hard worker".
+- Close with a confident call to action and a professional sign-off
+  ("Sincerely," followed by the candidate's name).
+- Avoid clichés like "team player", "hard worker", "go-getter".
 - Avoid generic filler. Be specific to this candidate and this job.
-- Do NOT include placeholder text like [Company Name] or [Your Name] —
-  if a detail is unknown, write naturally around it.
+- NEVER include placeholder text like [Company Name], [Your Name], [Date],
+  or [Phone] — extract real data from the resume or omit the field entirely.
+- Separate the header, date, greeting, body paragraphs, and sign-off with
+  blank lines for readability.
 
 Return ONLY valid JSON.
 
@@ -691,21 +704,101 @@ def download_cover_letter_docx(data: dict):
     normal_style.font.name = "Calibri"
     normal_style.font.size = Pt(11)
 
-    paragraphs = cover_letter.split("\n")
+    # Pre-process: extract name (first line) and contact line (second non-empty
+    # line if it looks like contact info — contains @ or | or phone-ish text).
+    # The AI is instructed to produce: NAME / CONTACT / DATE / DEAR... / BODY / SIGN-OFF.
+    raw_lines = [line.strip() for line in cover_letter.split("\n")]
+    non_empty = [l for l in raw_lines if l]
 
-    for line in paragraphs:
+    name_line = non_empty[0] if non_empty else ""
+
+    contact_line = ""
+    if len(non_empty) > 1:
+        candidate = non_empty[1]
+        if "@" in candidate or "|" in candidate or "·" in candidate:
+            contact_line = candidate
+
+    # Normalize the contact line: convert pipes to middle dots for a softer look.
+    if contact_line:
+        contact_line = " · ".join(part.strip() for part in contact_line.replace("·", "|").split("|"))
+
+    # Detect sign-off block so we can bold the closing name.
+    # Convention: a line equal to "Sincerely," (or similar) followed by a name line.
+    signoff_words = {"sincerely,", "best regards,", "regards,", "best,", "thanks,"}
+
+    rendered_header = False
+    skip_next_if_matches = None
+
+    for index, line in enumerate(raw_lines):
         clean_line = line.strip()
+
+        # Render the styled header once, replacing the first two content lines
+        if not rendered_header and clean_line == name_line:
+            # Name: large, bold, dark
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(2)
+            run = p.add_run(name_line)
+            run.bold = True
+            run.font.size = Pt(18)
+            run.font.color.rgb = RGBColor(17, 24, 39)
+
+            # Contact: smaller, muted gray
+            if contact_line:
+                p = doc.add_paragraph()
+                p.paragraph_format.space_after = Pt(6)
+                run = p.add_run(contact_line)
+                run.font.size = Pt(10)
+                run.font.color.rgb = RGBColor(107, 114, 128)
+
+                # Horizontal divider
+                add_horizontal_line(p)
+
+            rendered_header = True
+            # If the contact line was the second non-empty line, we'll need to skip it
+            # when we encounter it in the regular loop.
+            if contact_line and len(non_empty) > 1:
+                skip_next_if_matches = non_empty[1]
+            continue
+
+        # Skip the contact line on its actual loop iteration (we already rendered it)
+        if skip_next_if_matches and clean_line == skip_next_if_matches:
+            skip_next_if_matches = None
+            continue
 
         if not clean_line:
             continue
 
+        # Detect "Sincerely," etc. and bold the next line (the closing name)
+        if clean_line.lower() in signoff_words:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(8)
+            p.paragraph_format.space_after = Pt(2)
+            run = p.add_run(clean_line)
+            run.font.size = Pt(11)
+            run.font.color.rgb = RGBColor(75, 85, 99)
+            continue
+
+        # Closing name: if the previous non-empty line was a sign-off,
+        # render this line bold.
+        prev_non_empty = next(
+            (l for l in reversed(raw_lines[:index]) if l.strip()), ""
+        )
+        if prev_non_empty.lower() in signoff_words:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(10)
+            run = p.add_run(clean_line)
+            run.bold = True
+            run.font.size = Pt(11)
+            run.font.color.rgb = RGBColor(17, 24, 39)
+            continue
+
+        # Regular body paragraph
         p = doc.add_paragraph()
         p.paragraph_format.space_after = Pt(10)
-        p.paragraph_format.line_spacing = 1.3
-
+        p.paragraph_format.line_spacing = 1.4
         run = p.add_run(clean_line)
         run.font.size = Pt(11)
-        run.font.color.rgb = RGBColor(31, 41, 55)
+        run.font.color.rgb = RGBColor(55, 65, 81)
 
     doc.save(file_path)
 
@@ -897,35 +990,135 @@ def download_cover_letter_pdf(data: dict):
 
     styles = getSampleStyleSheet()
 
+    # Name header: bold, dark, large
+    name_style = ParagraphStyle(
+        "CoverLetterName",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=18,
+        leading=22,
+        textColor="#111827",
+        spaceAfter=2,
+    )
+
+    # Contact line: small, muted
+    contact_style = ParagraphStyle(
+        "CoverLetterContact",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=10,
+        leading=13,
+        textColor="#6B7280",
+        spaceAfter=6,
+    )
+
+    # Body paragraphs: readable, slightly muted
     letter_style = ParagraphStyle(
-        "CoverLetterStyle",
+        "CoverLetterBody",
         parent=styles["Normal"],
         fontName="Helvetica",
         fontSize=11,
-        leading=16,
-        textColor="#1F2937",
+        leading=17,
+        textColor="#374151",
         spaceAfter=11,
+    )
+
+    # Sign-off line itself ("Sincerely,")
+    signoff_style = ParagraphStyle(
+        "CoverLetterSignoff",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=11,
+        leading=15,
+        textColor="#4B5563",
+        spaceBefore=8,
+        spaceAfter=2,
+    )
+
+    # Closing name: bold, dark — mirrors the header name
+    closing_name_style = ParagraphStyle(
+        "CoverLetterClosingName",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=11,
+        leading=15,
+        textColor="#111827",
+        spaceAfter=10,
     )
 
     story = []
 
-    paragraphs = cover_letter.split("\n")
+    # Pre-process: extract name and contact line (same logic as DOCX version)
+    raw_lines = [line.strip() for line in cover_letter.split("\n")]
+    non_empty = [l for l in raw_lines if l]
 
-    for line in paragraphs:
+    name_line = non_empty[0] if non_empty else ""
+
+    contact_line = ""
+    if len(non_empty) > 1:
+        candidate = non_empty[1]
+        if "@" in candidate or "|" in candidate or "·" in candidate:
+            contact_line = candidate
+
+    # Normalize pipes to middle dots
+    if contact_line:
+        contact_line = " · ".join(part.strip() for part in contact_line.replace("·", "|").split("|"))
+
+    signoff_words = {"sincerely,", "best regards,", "regards,", "best,", "thanks,"}
+
+    rendered_header = False
+    skip_next_if_matches = None
+
+    def escape(text: str) -> str:
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    for index, line in enumerate(raw_lines):
         clean_line = line.strip()
 
-        if not clean_line:
-            story.append(Spacer(1, 6))
+        # Render the styled header once
+        if not rendered_header and clean_line == name_line:
+            story.append(Paragraph(escape(name_line), name_style))
+            if contact_line:
+                story.append(Paragraph(escape(contact_line), contact_style))
+                # Horizontal divider line
+                story.append(
+                    HRFlowable(
+                        width="100%",
+                        thickness=0.5,
+                        color="#D1D5DB",
+                        spaceBefore=2,
+                        spaceAfter=10,
+                    )
+                )
+            rendered_header = True
+            if contact_line and len(non_empty) > 1:
+                skip_next_if_matches = non_empty[1]
             continue
 
-        safe_line = (
-            clean_line
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-        )
+        # Skip the contact line on its real iteration (already rendered above)
+        if skip_next_if_matches and clean_line == skip_next_if_matches:
+            skip_next_if_matches = None
+            continue
 
-        story.append(Paragraph(safe_line, letter_style))
+        if not clean_line:
+            story.append(Spacer(1, 4))
+            continue
+
+        # Sign-off line
+        if clean_line.lower() in signoff_words:
+            story.append(Paragraph(escape(clean_line), signoff_style))
+            continue
+
+        # Closing name (line after a sign-off)
+        prev_non_empty = next(
+            (l for l in reversed(raw_lines[:index]) if l.strip()), ""
+        )
+        if prev_non_empty.lower() in signoff_words:
+            story.append(Paragraph(escape(clean_line), closing_name_style))
+            continue
+
+        # Regular body paragraph
+        story.append(Paragraph(escape(clean_line), letter_style))
 
     doc.build(story)
 
