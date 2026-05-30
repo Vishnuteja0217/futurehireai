@@ -66,6 +66,16 @@ export function generateTailoredResume(
   });
 }
 
+export function generateCoverLetter(
+  resume_text: string,
+  job_description: string,
+) {
+  return postJSON<{ cover_letter: string }>("/generate-cover-letter", {
+    resume_text,
+    job_description,
+  });
+}
+
 /**
  * Triggers a browser download for a generated resume.
  * Keeps blob-handling out of components.
@@ -90,6 +100,35 @@ export async function downloadTailoredResume(
   const a = document.createElement("a");
   a.href = url;
   a.download = `tailored_resume.${format}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Triggers a browser download for a generated cover letter.
+ */
+export async function downloadCoverLetter(
+  format: "docx" | "pdf",
+  cover_letter: string,
+) {
+  const endpoint =
+    format === "docx"
+      ? "/download-cover-letter-docx"
+      : "/download-cover-letter-pdf";
+
+  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cover_letter }),
+  });
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `cover_letter.${format}`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

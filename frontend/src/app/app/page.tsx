@@ -4,14 +4,14 @@ import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 
 import { AnalysisResults } from "@/components/analysis/AnalysisResults";
-import { AppNavbar } from "@/components/landing/AppNavbar";
-import { FeedbackButton } from "@/components/landing/FeedbackButton";
 import { Hero } from "@/components/landing/Hero";
 import { AtsModal } from "@/components/modals/AtsModal";
 import { JDModal } from "@/components/modals/JDModal";
 import { LimitModal } from "@/components/modals/LimitModal";
 
-// The /app route — the actual product.
+// The /app route — the Analyze page.
+// AppNavbar and FeedbackButton are now provided by /app/layout.tsx,
+// so this file only owns the page-specific content (Hero + results + modals).
 export default function AppPage() {
   const [jdOpen, setJdOpen] = useState(false);
   const [atsOpen, setAtsOpen] = useState(false);
@@ -21,19 +21,13 @@ export default function AppPage() {
 
   return (
     <>
-      <AppNavbar />
+      <Hero
+        onShowJD={() => setJdOpen(true)}
+        onShowAts={() => setAtsOpen(true)}
+        onShowLimit={() => setLimitOpen(true)}
+      />
 
-      <main>
-        <Hero
-          onShowJD={() => setJdOpen(true)}
-          onShowAts={() => setAtsOpen(true)}
-          onShowLimit={() => setLimitOpen(true)}
-        />
-
-        <AnalysisResults />
-      </main>
-
-      <FeedbackButton />
+      <AnalysisResults />
 
       <JDModal open={jdOpen} onClose={() => setJdOpen(false)} />
       <AtsModal open={atsOpen} onClose={() => setAtsOpen(false)} />
