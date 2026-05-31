@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { useResumeAnalysis } from "@/contexts/ResumeAnalysisContext";
 import { AnalysisCard } from "./AnalysisCard";
-import { MockInterview } from "./MockInterview";
 import { TailoredResume } from "./TailoredResume";
 
 // Tab configuration — controls which analysis sections show under each tab.
@@ -14,7 +13,6 @@ const tabs = [
   { id: "overview", label: "Overview", range: [0, 4] as const },
   { id: "resume", label: "Resume Fixes", range: [4, 7] as const },
   { id: "prep", label: "Interview Prep", range: [7, 11] as const },
-  { id: "mock", label: "Mock Interview", range: null },
   { id: "tailored", label: "Tailored Resume", range: null },
 ];
 
@@ -72,7 +70,6 @@ export function AnalysisResults() {
             </>
           )}
 
-          {activeTab === "mock" && <MockInterview />}
           {activeTab === "tailored" && <TailoredResume />}
         </div>
       </div>
