@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { LockedFeaturePage } from "@/components/layout/LockedFeaturePage";
-import { getSupabase } from "@/lib/getSupabase()";
+import { getSupabase } from "@/lib/supabase";
 import type { ApplicationStatus, JobApplication } from "@/lib/types";
 
 // ── Status config ─────────────────────────────────────────────────────────────
