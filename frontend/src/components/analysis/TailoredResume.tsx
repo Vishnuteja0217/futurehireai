@@ -35,15 +35,9 @@ export function TailoredResume() {
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-xl font-semibold text-slate-900">
-          Tailored Resume
-        </h3>
-      </div>
-
-      <p className="mb-5 text-sm text-slate-600">
-        Generate an AI-optimized version of your resume targeted at this exact
-        job description.
+      <p className="mb-5 text-sm leading-6 text-slate-600">
+        Want a version of your resume optimized for this exact job? Click below
+        and we&apos;ll rewrite it with the right keywords and framing.
       </p>
 
       <button

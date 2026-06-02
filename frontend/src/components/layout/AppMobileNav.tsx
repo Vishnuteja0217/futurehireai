@@ -4,11 +4,11 @@ import {
   ChartBar,
   ClipboardList,
   Clock,
-  FileText,
   Lock,
   Mail,
   Menu,
   Mic,
+  Sparkles,
   Users,
   X,
 } from "lucide-react";
@@ -36,7 +36,7 @@ const BAR_ITEMS: Array<{
   requiresAuth: boolean;
 }> = [
   { href: "/app", icon: ChartBar, label: "Analyze", requiresAuth: false },
-  { href: "/app/tailored-resume", icon: FileText, label: "Resume", requiresAuth: true },
+  { href: "/app/candidate-evaluation", icon: Sparkles, label: "Evaluation", requiresAuth: true },
   { href: "/app/cover-letter", icon: Mail, label: "Cover", requiresAuth: true },
   { href: "/app/mock-interview", icon: Mic, label: "Mock", requiresAuth: true },
 ];

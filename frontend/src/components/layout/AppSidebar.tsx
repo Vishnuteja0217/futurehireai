@@ -4,9 +4,9 @@ import {
   ChartBar,
   Clock,
   ClipboardList,
-  FileText,
   Mail,
   Mic,
+  Sparkles,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -46,11 +46,11 @@ export function AppSidebar({
           active={activePath === "/app"}
         />
         <SidebarItem
-          href="/app/tailored-resume"
-          icon={FileText}
-          label="Tailored Resume"
+          href="/app/candidate-evaluation"
+          icon={Sparkles}
+          label="Candidate Evaluation"
           tileColor="purple"
-          active={activePath === "/app/tailored-resume"}
+          active={activePath === "/app/candidate-evaluation"}
           locked={lockedForAnon}
         />
         <SidebarItem

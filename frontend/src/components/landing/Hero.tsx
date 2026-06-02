@@ -77,26 +77,36 @@ export function Hero({ onShowJD, onShowAts, onShowLimit }: HeroProps) {
       <div className="mx-auto w-full max-w-7xl px-6">
         {/* Intro */}
         <div className="mx-auto max-w-4xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-700">
-            <Sparkles className="h-3.5 w-3.5" />
-            AI-Powered Career Intelligence — Beta
-          </div>
+          {/* Marketing block — hidden for signed-in users */}
+          {/* Signed-in users already know what the product does; this block */}
+          {/* would push the actual tool below the fold. Anonymous visitors */}
+          {/* still need the pitch, so we keep it for them. */}
+          {!isSignedIn && (
+            <>
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-200/70 bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-700">
+                <Sparkles className="h-3.5 w-3.5" />
+                AI-Powered Career Intelligence — Beta
+              </div>
 
-          <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
-            Most tools stop at your resume.{" "}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
-              We get you interview-ready.
-            </span>
-          </h1>
+              <h1 className="text-4xl font-bold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+                Most tools stop at your resume.{" "}
+                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                  We get you interview-ready.
+                </span>
+              </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg md:leading-8">
-            AI checks your resume against any job, shows you why you'd get
-            rejected, fixes it, and preps you for the interview — all in one
-            place.
-          </p>
+              <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg md:leading-8">
+                AI checks your resume against any job, shows you why you&apos;d
+                get rejected, fixes it, and preps you for the interview — all
+                in one place.
+              </p>
+            </>
+          )}
 
-          {/* Trust badges — sit below the headline, matching the reference */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-slate-600">
+          {/* Trust badges — stay visible for everyone. Brand-consistent.    */}
+          {/* On signed-in pages they reinforce trust without taking up much */}
+          {/* space. Top margin only when the marketing block above exists.  */}
+          <div className={`${isSignedIn ? "" : "mt-8"} flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-slate-600`}>
             <TrustBadge icon={<BarChart3 className="h-4 w-4 text-blue-600" />}>
               AI-Powered Insights
             </TrustBadge>
