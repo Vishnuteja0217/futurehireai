@@ -97,7 +97,6 @@ export function AppSidebar({
           tileColor="slate"
           active={activePath === "/app/history"}
           locked={lockedForAnon}
-          comingSoon={!lockedForAnon}
         />
       </nav>
 
