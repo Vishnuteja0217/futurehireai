@@ -5,6 +5,7 @@
 // component (Hero, AnalysisResults, modals) reads via useResumeAnalysis().
 // This is what replaces the ~20 useState calls in the original page.tsx.
 
+import { useAuth } from "@clerk/nextjs";
 import {
   createContext,
   useCallback,
@@ -22,6 +23,7 @@ import {
   generateTailoredResume,
   uploadResume,
 } from "@/lib/api";
+import { saveHistory } from "@/lib/history";
 import type {
   AnalysisSection,
   AnswerFeedback,
@@ -75,6 +77,7 @@ const ResumeAnalysisContext = createContext<ResumeAnalysisContextValue | null>(
 );
 
 export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
+  const { userId } = useAuth();
   const [resume, setResume] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState("");
 
@@ -135,7 +138,7 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       setInitialAtsReasoning(data.initial_ats_reasoning ?? []);
 
       // Map backend response into ordered sections the tabs read from
-      setAnalysis([
+      const sections: AnalysisSection[] = [
         { title: "Top Strengths", items: data.top_strengths ?? [] },
         { title: "Critical Gaps", items: data.critical_gaps ?? [] },
         { title: "Recruiter Concerns", items: data.recruiter_concerns ?? [] },
@@ -178,7 +181,21 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
             data.scenario_based_questions ??
             [],
         },
-      ]);
+      ];
+      setAnalysis(sections);
+
+      // Save to history (non-blocking — never interrupts the main flow)
+      if (userId) {
+        const jdSnippet = finalJD.slice(0, 300);
+        saveHistory({
+          userId,
+          feature: "analyze",
+          title: jdSnippet.split("\n")[0].slice(0, 80) || "Resume Analysis",
+          atsScore: data.initial_ats_score ?? null,
+          inputData: { job_description_snippet: jdSnippet },
+          outputData: { ats_score: data.initial_ats_score, ats_reasoning: data.initial_ats_reasoning, sections },
+        });
+      }
     } catch (err) {
       console.error(err);
       alert("Something went wrong while analyzing.");
@@ -221,6 +238,22 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       setResumeText(resume_text);  // cache for reuse
       const data = await generateTailoredResume(resume_text, jobDescription);
       setTailoredResume(data);
+
+      // Save to history
+      if (userId) {
+        saveHistory({
+          userId,
+          feature: "tailored_resume",
+          title: jobDescription.split("\n")[0].slice(0, 80) || "Tailored Resume",
+          atsScore: data.projected_ats_score_after_tailoring ?? null,
+          inputData: { job_description_snippet: jobDescription.slice(0, 300) },
+          outputData: {
+            projected_ats_score: data.projected_ats_score_after_tailoring,
+            ats_reasoning: data.ats_score_reasoning,
+            tailored_resume: data.tailored_resume,
+          },
+        });
+      }
     } catch (err) {
       console.error(err);
       alert("Something went wrong while generating your tailored resume.");
@@ -253,6 +286,17 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
 
       const data = await generateCoverLetter(textToUse, jobDescription);
       setCoverLetter(data.cover_letter ?? "");
+
+      // Save to history
+      if (userId && data.cover_letter) {
+        saveHistory({
+          userId,
+          feature: "cover_letter",
+          title: jobDescription.split("\n")[0].slice(0, 80) || "Cover Letter",
+          inputData: { job_description_snippet: jobDescription.slice(0, 300) },
+          outputData: { cover_letter: data.cover_letter },
+        });
+      }
     } catch (err) {
       console.error(err);
       alert("Something went wrong while generating your cover letter.");
