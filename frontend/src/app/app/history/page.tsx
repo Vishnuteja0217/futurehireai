@@ -69,7 +69,8 @@ function DetailModal({
 }) {
   const meta = featureMeta(entry.feature);
   const Icon = meta.icon;
-  const output = entry.output_data;
+  const output = entry.output_data as Record<string, unknown>;
+  const inputData = entry.input_data as Record<string, unknown> | null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-10">
@@ -101,19 +102,19 @@ function DetailModal({
           {/* ATS Score */}
           {entry.ats_score != null && (
             <div className="flex items-center gap-3 rounded-xl bg-blue-50 px-4 py-3">
-              <span className="text-2xl font-bold text-blue-700">{entry.ats_score}</span>
+              <span className="text-2xl font-bold text-blue-700">{String(entry.ats_score)}</span>
               <span className="text-sm text-blue-600">ATS Score</span>
             </div>
           )}
 
           {/* Job description snippet */}
-          {entry.input_data?.job_description_snippet && (
+          {inputData?.job_description_snippet && (
             <div>
               <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 Job Description (snippet)
               </p>
               <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 leading-relaxed">
-                {String(entry.input_data.job_description_snippet)}
+                {String(inputData.job_description_snippet)}
               </p>
             </div>
           )}
