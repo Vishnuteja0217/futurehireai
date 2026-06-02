@@ -13,7 +13,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { LockedFeaturePage } from "@/components/layout/LockedFeaturePage";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/getSupabase()";
 import type { ApplicationStatus, JobApplication } from "@/lib/types";
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ function AddModal({ userId, onClose, onSaved }: AddModalProps) {
     }
     setSaving(true);
     setError("");
-    const { data, error: err } = await supabase
+    const { data, error: err } = await getSupabase()
       .from("job_applications")
       .insert({
         user_id:      userId,
@@ -237,7 +237,7 @@ export default function TrackerPage() {
     if (!isLoaded || !isSignedIn || !user) return;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      const { data } = await getSupabase()
         .from("job_applications")
         .select("*")
         .eq("user_id", user.id)
@@ -275,7 +275,7 @@ export default function TrackerPage() {
 
   async function handleStatusChange(app: JobApplication, newStatus: ApplicationStatus) {
     setUpdatingId(app.id);
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from("job_applications")
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", app.id)
@@ -290,7 +290,7 @@ export default function TrackerPage() {
 
   async function handleDelete(app: JobApplication) {
     if (!confirm(`Delete "${app.company} — ${app.role}"?`)) return;
-    await supabase
+    await getSupabase()
       .from("job_applications")
       .delete()
       .eq("id", app.id)
