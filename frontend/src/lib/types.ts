@@ -39,3 +39,27 @@ export interface TailoredResume {
   ats_score_reasoning: string[];
   tailored_resume: string;
 }
+
+// ── Job Application Tracker ───────────────────────────────────────────────────
+
+export type ApplicationStatus =
+  | "applied"
+  | "phone_screen"
+  | "interviewing"
+  | "offer"
+  | "rejected"
+  | "withdrawn"
+  | "ghosted";
+
+export interface JobApplication {
+  id: string;
+  user_id: string;
+  company: string;
+  role: string;
+  url: string | null;
+  date_applied: string;        // ISO date string YYYY-MM-DD
+  status: ApplicationStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
