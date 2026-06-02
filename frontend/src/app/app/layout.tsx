@@ -42,7 +42,7 @@ export default function AppLayout({
 
   return (
     <ResumeAnalysisProvider>
-      <div className="flex min-h-screen flex-col bg-slate-50">
+      <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
         {/* ─── Full-width top header ─── */}
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export default function AppLayout({
           </div>
 
           {/* Main content */}
-          <main className="flex-1 overflow-x-hidden">{children}</main>
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
         </div>
 
         <FeedbackButton />
