@@ -89,7 +89,6 @@ export function AppSidebar({
           tileColor="amber"
           active={activePath === "/app/tracker"}
           locked={lockedForAnon}
-          comingSoon={!lockedForAnon}
         />
         <SidebarItem
           href="/app/history"
