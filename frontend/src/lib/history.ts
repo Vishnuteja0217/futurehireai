@@ -14,8 +14,8 @@ export interface HistoryEntry {
   user_id: string;
   feature: HistoryFeature;
   title: string | null;
-  ats_score: number | null;
-  input_data: Record<string, unknown> | null;
+  ats_score: number | null | undefined;
+  input_data: Record<string, unknown> | null | undefined;
   output_data: Record<string, unknown>;
   created_at: string;
 }

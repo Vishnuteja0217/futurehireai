@@ -100,9 +100,9 @@ function DetailModal({
         <div className="max-h-[70vh] overflow-y-auto px-6 py-5 space-y-5">
 
           {/* ATS Score */}
-          {entry.ats_score != null && (
+          {typeof entry.ats_score === "number" && (
             <div className="flex items-center gap-3 rounded-xl bg-blue-50 px-4 py-3">
-              <span className="text-2xl font-bold text-blue-700">{String(entry.ats_score)}</span>
+              <span className="text-2xl font-bold text-blue-700">{entry.ats_score}</span>
               <span className="text-sm text-blue-600">ATS Score</span>
             </div>
           )}
