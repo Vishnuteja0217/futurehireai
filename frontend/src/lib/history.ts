@@ -1,7 +1,12 @@
 // Saves an activity history entry to Supabase.
 // Called after each successful generation in ResumeAnalysisContext.
+//
+// Each function now takes a `supabase` client as a parameter instead of
+// creating its own. This keeps the file as a pure utility (no React hooks)
+// while still benefitting from the Clerk-authenticated client created
+// in the calling component.
 
-import { getSupabase } from "./supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type HistoryFeature =
   | "analyze"
@@ -21,6 +26,7 @@ export interface HistoryEntry {
 }
 
 export async function saveHistory({
+  supabase,
   userId,
   feature,
   title,
@@ -28,6 +34,7 @@ export async function saveHistory({
   inputData,
   outputData,
 }: {
+  supabase: SupabaseClient;
   userId: string;
   feature: HistoryFeature;
   title?: string;
@@ -36,7 +43,7 @@ export async function saveHistory({
   outputData: Record<string, unknown>;
 }): Promise<void> {
   try {
-    await getSupabase().from("activity_history").insert({
+    await supabase.from("activity_history").insert({
       user_id:     userId,
       feature,
       title:       title ?? null,
@@ -50,8 +57,11 @@ export async function saveHistory({
   }
 }
 
-export async function loadHistory(userId: string): Promise<HistoryEntry[]> {
-  const { data } = await getSupabase()
+export async function loadHistory(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<HistoryEntry[]> {
+  const { data } = await supabase
     .from("activity_history")
     .select("*")
     .eq("user_id", userId)
@@ -60,8 +70,12 @@ export async function loadHistory(userId: string): Promise<HistoryEntry[]> {
   return (data as HistoryEntry[]) ?? [];
 }
 
-export async function deleteHistoryEntry(id: string, userId: string): Promise<void> {
-  await getSupabase()
+export async function deleteHistoryEntry(
+  supabase: SupabaseClient,
+  id: string,
+  userId: string,
+): Promise<void> {
+  await supabase
     .from("activity_history")
     .delete()
     .eq("id", id)
