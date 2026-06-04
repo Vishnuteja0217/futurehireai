@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.1",
+    "@sentry/nextjs": "^10.56.0",
     "@supabase/supabase-js": "^2.106.2",
     "@vercel/analytics": "^2.0.1",
     "lucide-react": "^0.460.0",
