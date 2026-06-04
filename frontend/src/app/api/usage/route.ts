@@ -11,6 +11,23 @@ import { NextResponse } from "next/server";
 
 const DAILY_LIMIT = 5;
 
+// Internal admin emails that bypass the daily limit entirely.
+// Used for testing the product without burning real user quota.
+// SERVER-SIDE check — actual enforcement happens here, not in the UI.
+const ADMIN_EMAILS = new Set<string>([
+  "vishnuteja564@gmail.com",
+]);
+
+// Returns the "unlimited" state for admins.
+function adminState() {
+  return {
+    date:            todayUTC(),
+    usageToday:      0,
+    limit:           9999,
+    hasReachedLimit: false,
+  };
+}
+
 // Today's date in YYYY-MM-DD format (UTC).
 function todayUTC(): string {
   return new Date().toISOString().slice(0, 10);
@@ -39,6 +56,13 @@ export async function GET() {
 
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
+
+  // Admin bypass — check primary email against allowlist
+  const email = user.primaryEmailAddress?.emailAddress?.toLowerCase();
+  if (email && ADMIN_EMAILS.has(email)) {
+    return NextResponse.json(adminState());
+  }
+
   return NextResponse.json(normalize(user.publicMetadata));
 }
 
@@ -50,6 +74,13 @@ export async function POST() {
 
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
+
+  // Admin bypass — never increment, always return unlimited state
+  const email = user.primaryEmailAddress?.emailAddress?.toLowerCase();
+  if (email && ADMIN_EMAILS.has(email)) {
+    return NextResponse.json(adminState());
+  }
+
   const current = normalize(user.publicMetadata);
 
   // Already at cap — refuse the increment so the server can't be tricked
