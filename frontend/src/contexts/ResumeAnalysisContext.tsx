@@ -24,6 +24,7 @@ import {
   uploadResume,
 } from "@/lib/api";
 import { saveHistory } from "@/lib/history";
+import { useSupabaseClient } from "@/lib/supabase";
 import type {
   AnalysisSection,
   AnswerFeedback,
@@ -78,6 +79,7 @@ const ResumeAnalysisContext = createContext<ResumeAnalysisContextValue | null>(
 
 export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
   const { userId } = useAuth();
+  const supabase = useSupabaseClient();
   const [resume, setResume] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState("");
 
@@ -188,6 +190,7 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       if (userId) {
         const jdSnippet = finalJD.slice(0, 300);
         saveHistory({
+          supabase,
           userId,
           feature: "analyze",
           title: jdSnippet.split("\n")[0].slice(0, 80) || "Resume Analysis",
@@ -242,6 +245,7 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       // Save to history
       if (userId) {
         saveHistory({
+          supabase,
           userId,
           feature: "tailored_resume",
           title: jobDescription.split("\n")[0].slice(0, 80) || "Tailored Resume",
@@ -290,6 +294,7 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       // Save to history
       if (userId && data.cover_letter) {
         saveHistory({
+          supabase,
           userId,
           feature: "cover_letter",
           title: jobDescription.split("\n")[0].slice(0, 80) || "Cover Letter",

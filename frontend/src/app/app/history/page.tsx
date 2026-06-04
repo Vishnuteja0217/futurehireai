@@ -21,6 +21,7 @@ import {
   type HistoryEntry,
   type HistoryFeature,
 } from "@/lib/history";
+import { useSupabaseClient } from "@/lib/supabase";
 
 // ── Feature config ────────────────────────────────────────────────────────────
 
@@ -254,6 +255,7 @@ function HistoryCard({
 
 export default function HistoryPage(): ReactNode {
   const { isSignedIn, isLoaded, user } = useUser();
+  const supabase = useSupabaseClient();
 
   const [entries, setEntries]   = useState<HistoryEntry[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -264,11 +266,11 @@ export default function HistoryPage(): ReactNode {
     if (!isLoaded || !isSignedIn || !user) return;
     void (async () => {
       setLoading(true);
-      const data = await loadHistory(user.id);
+      const data = await loadHistory(supabase, user.id);
       setEntries(data);
       setLoading(false);
     })();
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, supabase]);
 
   if (!isLoaded) return null;
 
@@ -295,7 +297,7 @@ export default function HistoryPage(): ReactNode {
 
   const handleDelete = async (entry: HistoryEntry): Promise<void> => {
     if (!confirm("Delete this entry?")) return;
-    await deleteHistoryEntry(entry.id, user.id);
+    await deleteHistoryEntry(supabase, entry.id, user.id);
     setEntries((prev) => prev.filter((e) => e.id !== entry.id));
   };
 

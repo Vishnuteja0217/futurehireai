@@ -13,7 +13,8 @@ import {
 import { useEffect, useState } from "react";
 
 import { LockedFeaturePage } from "@/components/layout/LockedFeaturePage";
-import { getSupabase } from "@/lib/supabase";
+import { useSupabaseClient } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ApplicationStatus, JobApplication } from "@/lib/types";
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -36,12 +37,13 @@ function statusMeta(value: ApplicationStatus) {
 // ── Add Application Modal ─────────────────────────────────────────────────────
 
 interface AddModalProps {
+  supabase: SupabaseClient;
   userId: string;
   onClose: () => void;
   onSaved: (app: JobApplication) => void;
 }
 
-function AddModal({ userId, onClose, onSaved }: AddModalProps) {
+function AddModal({ supabase, userId, onClose, onSaved }: AddModalProps) {
   const today = new Date().toISOString().split("T")[0];
   const [form, setForm] = useState({
     company: "",
@@ -66,7 +68,7 @@ function AddModal({ userId, onClose, onSaved }: AddModalProps) {
     }
     setSaving(true);
     setError("");
-    const { data, error: err } = await getSupabase()
+    const { data, error: err } = await supabase
       .from("job_applications")
       .insert({
         user_id:      userId,
@@ -225,6 +227,7 @@ function SummaryBar({ apps }: { apps: JobApplication[] }) {
 
 export default function TrackerPage() {
   const { isSignedIn, isLoaded, user } = useUser();
+  const supabase = useSupabaseClient();
 
   const [apps, setApps]       = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,7 +240,7 @@ export default function TrackerPage() {
     if (!isLoaded || !isSignedIn || !user) return;
     (async () => {
       setLoading(true);
-      const { data } = await getSupabase()
+      const { data } = await supabase
         .from("job_applications")
         .select("*")
         .eq("user_id", user.id)
@@ -245,7 +248,7 @@ export default function TrackerPage() {
       setApps((data as JobApplication[]) ?? []);
       setLoading(false);
     })();
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, supabase]);
 
   if (!isLoaded) return null;
 
@@ -275,7 +278,7 @@ export default function TrackerPage() {
 
   async function handleStatusChange(app: JobApplication, newStatus: ApplicationStatus) {
     setUpdatingId(app.id);
-    const { data } = await getSupabase()
+    const { data } = await supabase
       .from("job_applications")
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq("id", app.id)
@@ -290,7 +293,7 @@ export default function TrackerPage() {
 
   async function handleDelete(app: JobApplication) {
     if (!confirm(`Delete "${app.company} — ${app.role}"?`)) return;
-    await getSupabase()
+    await supabase
       .from("job_applications")
       .delete()
       .eq("id", app.id)
@@ -305,6 +308,7 @@ export default function TrackerPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       {showModal && (
         <AddModal
+          supabase={supabase}
           userId={user.id}
           onClose={() => setShowModal(false)}
           onSaved={(app) => setApps((prev) => [app, ...prev])}
