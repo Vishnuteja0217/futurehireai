@@ -39,7 +39,6 @@ const PLANS = {
       features: [
         "50 actions / month",
         "Use across analyses, cover letters, mock interviews",
-        "Priority support",
         "Cancel anytime",
       ],
       ctaLabel: "Subscribe",
@@ -54,7 +53,6 @@ const PLANS = {
       features: [
         "150 actions / month",
         "Use across analyses, cover letters, mock interviews",
-        "Premium support",
         "Cancel anytime",
       ],
       ctaLabel: "Subscribe",
