@@ -37,13 +37,13 @@ const PLANS = {
       period: "per month",
       priceId: "price_1TelJSFextBgiBxdYLis0yUS",
       features: [
-        "50 analyses / month",
-        "10 cover letters",
-        "25 mock interviews",
+        "50 actions / month",
+        "Use across analyses, cover letters, mock interviews",
         "Priority support",
+        "Cancel anytime",
       ],
       ctaLabel: "Subscribe",
-      featured: true,                  // gets the "Most popular" badge + border accent
+      featured: true,
     },
     {
       id: "premium",
@@ -52,10 +52,10 @@ const PLANS = {
       period: "per month",
       priceId: "price_1TelOUFextBgiBxdELx4FM4V",
       features: [
-        "150 analyses / month",
-        "30 cover letters",
-        "75 mock interviews",
+        "150 actions / month",
+        "Use across analyses, cover letters, mock interviews",
         "Premium support",
+        "Cancel anytime",
       ],
       ctaLabel: "Subscribe",
       featured: false,
@@ -69,39 +69,11 @@ const PLANS = {
       period: "24-hour access",
       priceId: "price_1TelH2FextBgiBxdGHYMfN9q",
       features: [
-        "20 analyses",
-        "5 cover letters",
-        "10 mock interviews",
+        "20 actions in 24 hours",
+        "Use across analyses, cover letters, mock interviews",
+        "No subscription, no commitment",
       ],
       ctaLabel: "Buy now",
-      featured: false,
-    },
-    {
-      id: "one_on_one_30min",
-      name: "1-on-1 (30 min)",
-      price: "$14.99",
-      period: "video session",
-      priceId: "price_1TelVRFextBgiBxdlo76PZ6p",
-      features: [
-        "Resume review",
-        "Quick interview prep",
-        "Career questions",
-      ],
-      ctaLabel: "Book session",
-      featured: false,
-    },
-    {
-      id: "one_on_one_60min",
-      name: "1-on-1 (60 min)",
-      price: "$28.99",
-      period: "video session",
-      priceId: "price_1TelWQFextBgiBxdfSrcIwxQ",
-      features: [
-        "Deep resume audit",
-        "Full mock interview",
-        "Career roadmap",
-      ],
-      ctaLabel: "Book session",
       featured: false,
     },
   ],
@@ -180,9 +152,8 @@ export default function PricingPage() {
           </div>
         )}
 
-        {/* SECTION 1: Subscriptions */}
-        <SectionLabel>Monthly subscriptions</SectionLabel>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        {/* All plans in one row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {PLANS.subscriptions.map((plan) => (
             <PlanCard
               key={plan.id}
@@ -192,11 +163,6 @@ export default function PricingPage() {
               onCheckout={() => handleCheckout(plan)}
             />
           ))}
-        </div>
-
-        {/* SECTION 2: One-time */}
-        <SectionLabel>One-time purchases</SectionLabel>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PLANS.oneTime.map((plan) => (
             <PlanCard
               key={plan.id}
@@ -217,14 +183,6 @@ export default function PricingPage() {
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
-      {children}
-    </div>
-  );
-}
-
 function PlanCard({
   plan,
   isSubscription,
@@ -240,10 +198,10 @@ function PlanCard({
 
   return (
     <div
-      className={`relative rounded-xl bg-white p-6 ${
+      className={`relative rounded-xl bg-white p-6 shadow-lg ${
         plan.featured
-          ? "border-2 border-emerald-500 shadow-md"
-          : "border border-slate-200"
+          ? "border-2 border-emerald-500 shadow-emerald-200"
+          : "border border-slate-400 shadow-slate-300"
       }`}
     >
       {plan.featured && (
@@ -282,7 +240,10 @@ function PlanCard({
       </button>
 
       {isSubscription && !isFree && (
-        <p className="text-xs text-slate-400 text-center mt-2">Cancel anytime</p>
+        <p className="text-xs font-medium text-emerald-700 text-center mt-3 flex items-center justify-center gap-1">
+          <span className="inline-block w-1 h-1 rounded-full bg-emerald-500"></span>
+          Cancel anytime
+        </p>
       )}
     </div>
   );
