@@ -63,6 +63,17 @@ class ResumeJDRequest(BaseModel):
     resume_text: str
     job_description: str
 
+class TailorResumeRequest(BaseModel):
+    """
+    Used by /generate-tailored-resume only. Adds an optional list of
+    skills the candidate has CONFIRMED they actually used (collected
+    via the SkillConfirmationModal on the frontend). These confirmed
+    skills get woven into the tailored resume.
+    """
+    resume_text: str
+    job_description: str
+    confirmed_skills: list[str] = []
+
 class AnswerEvaluationRequest(BaseModel):
     question: str
     answer: str
@@ -126,6 +137,7 @@ Job Description:
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
+        temperature=0,
         messages=[
             {
                 "role": "system",
@@ -137,6 +149,12 @@ Job Description:
             }
         ]
     )
+
+    parsed_response = json.loads(
+        response.choices[0].message.content
+    )
+
+    return parsed_response
 
 
 @app.post("/compare-resume-jd")
@@ -237,6 +255,7 @@ Job Description:
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
+        temperature=0,
         messages=[
             {
                 "role": "system",
@@ -318,6 +337,7 @@ Candidate Answer:
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
+        temperature=0,
         messages=[
             {
                 "role": "system",
@@ -338,71 +358,187 @@ Candidate Answer:
 
     return parsed_response
 
-@app.post("/generate-tailored-resume")
-def generate_tailored_resume(data: ResumeJDRequest):
+@app.post("/detect-missing-skills")
+def detect_missing_skills(data: ResumeJDRequest):
+    """
+    Identifies specific tools/technologies the JD mentions that are NOT
+    present in the candidate's resume. Used to ask the candidate
+    "have you used these?" before tailoring, so we can honestly
+    add real experience the candidate forgot to list.
+    
+    We deliberately return ONLY tool/technology names — no fluff,
+    no explanations, no soft skills. Frontend uses these as checklist items.
+    """
 
     prompt = f"""
-You are an expert ATS analyst, technical recruiter, and resume strategist.
+You are an ATS analyst comparing a job description to a candidate's resume.
 
-Your job is to tailor the candidate's resume for the target job description.
+Identify SPECIFIC TOOLS and TECHNOLOGIES that the JD mentions but the
+candidate's resume does NOT clearly include. Return ONLY the tools/technologies
+that are MISSING from the resume.
 
-VERY IMPORTANT RULES:
-- Do NOT invent fake experience
-- Do NOT add technologies the candidate cannot justify
-- Do NOT create fake projects
-- Do NOT fabricate metrics
-- Only optimize and reframe existing experience
-- Improve recruiter alignment
-- Improve ATS alignment
-- Make bullets more impactful and structured
-- Emphasize relevant experience for the target role
+Strict rules:
+- Return ONLY concrete tools, technologies, languages, frameworks, services,
+  or platforms. Examples: Terraform, Kubernetes, C#, PostgreSQL, GitLab CI,
+  Jenkins, AWS Lambda, React, Spring Boot.
+- DO NOT return soft skills, methodologies (Agile, DevOps), abstract concepts
+  (CI/CD, microservices), seniority levels, years of experience, or role
+  responsibilities.
+- DO NOT return tools that ARE already mentioned in the resume.
+- Maximum 10 items.
+- Items must be specific names, not categories (return "Kubernetes" not "containers").
+- If the resume mentions a related but different tool (e.g., resume has
+  CloudFormation, JD asks Terraform), include the JD's tool as missing —
+  the candidate might have used both.
 
-Return ONLY valid JSON.
+Return ONLY valid JSON. No markdown, no explanations.
 
 Format:
 
 {{
-  "projected_ats_score_after_tailoring": 0,
-  "ats_score_reasoning": [],
+  "missing_skills": []
+}}
+
+Resume:
+{data.resume_text}
+
+Job Description:
+{data.job_description}
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        temperature=0,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an honest ATS analyst comparing resumes to job descriptions."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+    )
+
+    parsed_response = json.loads(
+        response.choices[0].message.content
+    )
+
+    # Defensive: ensure missing_skills is always a list of clean strings,
+    # max 10 items. Frontend assumes this shape.
+    raw_skills = parsed_response.get("missing_skills", [])
+    if not isinstance(raw_skills, list):
+        raw_skills = []
+
+    clean_skills = []
+    for skill in raw_skills:
+        if isinstance(skill, str) and skill.strip():
+            clean_skills.append(skill.strip())
+        if len(clean_skills) >= 10:
+            break
+
+    return {"missing_skills": clean_skills}
+
+@app.post("/generate-tailored-resume")
+def generate_tailored_resume(data: TailorResumeRequest):
+
+    # ----------------------------------------------------------------
+    # STEP 1: Score the ORIGINAL resume first.
+    # We do this so the tailoring prompt knows EXACTLY what the
+    # scorer flagged as missing. Targeted improvement >> generic improvement.
+    # ----------------------------------------------------------------
+    original_score_data = compare_resume_jd(data)
+    original_score = original_score_data.get("match_score", 0)
+    original_gaps = original_score_data.get("critical_gaps", [])
+    original_concerns = original_score_data.get("recruiter_concerns", [])
+    original_improvements = original_score_data.get("resume_bullet_improvements", [])
+
+    def _format_bullets(items):
+        """Convert a list to numbered bullets for the prompt."""
+        if not items:
+            return "(none flagged)"
+        return "\n".join(
+            f"{i+1}. {item}" for i, item in enumerate(items) if isinstance(item, str) and item.strip()
+        )
+
+    # ----------------------------------------------------------------
+    # STEP 2: Build a TARGETED tailoring prompt.
+    # Pass the original score + recruiter's specific feedback so the
+    # rewrite addresses real weaknesses, not invented ones.
+    # ----------------------------------------------------------------
+    prompt = f"""
+You are an expert ATS analyst, technical recruiter, and resume strategist.
+
+The candidate's CURRENT resume scored {original_score}/100 against this job description.
+
+A senior recruiter reviewed the resume and flagged these specific issues:
+
+CRITICAL GAPS (must address):
+{_format_bullets(original_gaps)}
+
+RECRUITER CONCERNS (worth addressing):
+{_format_bullets(original_concerns)}
+
+SUGGESTED BULLET IMPROVEMENTS (recruiter's exact recommendations):
+{_format_bullets(original_improvements)}
+
+YOUR JOB: Rewrite the resume to specifically address these issues using ONLY
+the candidate's real existing experience. The goal is to push the score
+ABOVE the current {original_score} by addressing recruiter feedback.
+
+CONFIRMED ADDITIONAL EXPERIENCE:
+The candidate has explicitly CONFIRMED hands-on experience with the following
+tools/technologies that were not currently on their resume (the system asked
+the candidate "have you used these?" and they answered YES):
+
+{_format_bullets(data.confirmed_skills) if data.confirmed_skills else "(none — candidate did not confirm any additional tools)"}
+
+You MAY add these confirmed skills to the resume since the candidate
+verified they have actually used them. Weave them naturally into:
+1. The Technical Skills section (always add to the appropriate category)
+2. Existing bullets where the work described could plausibly involve them
+   (e.g., if they confirmed "Terraform" and have a bullet about "AWS
+   infrastructure," you may say "Designed AWS infrastructure using Terraform")
+
+Do NOT add the confirmed skills to bullets where they don't fit the work
+described. Do NOT invent NEW bullets just to feature the confirmed skills —
+weave them into existing experience.
+
+VERY IMPORTANT RULES:
+- Do NOT invent fake experience, tools, projects, metrics, or certifications.
+- Do NOT add technologies the candidate cannot justify from their original resume.
+- Only reframe and emphasize what is already real in the resume.
+- Specifically address the gaps and concerns listed above.
+- Strengthen bullets using action + technology + measurable impact.
+- Add JD-relevant keywords naturally where the candidate's experience supports them.
+- Remove weak filler phrases such as "responsible for", "worked on", "helped with", "familiar with".
+- If the candidate genuinely lacks experience for a gap, do NOT pretend they have it.
+  Instead, reframe their closest real experience using the JD's vocabulary.
+
+Return ONLY valid JSON.
+
+Format:
+{{
   "tailored_resume": ""
 }}
 
-ATS scoring rules:
-- initial_ats_score should estimate how well the current resume aligns with the JD from 0 to 100
-- projected_ats_score_after_tailoring should estimate improvement after applying the tailored resume changes
-- Do not inflate scores unrealistically
-- Base scores on keyword alignment, role relevance, experience depth, resume clarity, and missing JD requirements
-- ats_score_reasoning should explain why the score increased or why it is limited
-- projected_ats_score_after_tailoring must reflect realistic improvement after tailoring.
-- A score above 90 is allowed only when the resume strongly supports the JD requirements.
-- If the score is below 90, clearly explain what prevents it from reaching 90.
-- Do not reward keyword stuffing.
-- Reward truthful role alignment, measurable impact, technical specificity, and strong formatting.
-
-Resume tailoring rules: 
+Resume tailoring rules:
 - Generate a complete tailored resume based only on the candidate's real resume.
-- The resume must be highly optimized for the JD while staying truthful.
-- Aim for a projected ATS score between 85 and 95 when the candidate's real experience supports it.
-- Do NOT force a 90+ score if the candidate lacks major required experience.
-- Do NOT invent fake experience, fake tools, fake companies, fake projects, fake metrics, fake certifications, or fake dates.
-- If a requirement is missing, honestly reframe related real experience without pretending direct experience.
-- Strengthen bullets using action + technology + business/technical impact.
-- Add JD-relevant keywords naturally, not as keyword stuffing.
-- Prioritize recruiter readability, ATS parsing, measurable impact, and interview defensibility.
-- Remove weak filler phrases such as responsible for, worked on, helped with, familiar with.
-- If the candidate is already strong, say the resume is strong and optimize toward perfection instead of creating fake weaknesses.
-- If the candidate is weak for the JD, be honest and improve what can realistically be improved.
-- The tailored_resume field should contain the full resume text with these sections only when supported by the original resume:
-  Contact
-  Professional Summary
-  Technical Skills
-  Professional Experience
-  Projects
-  Education
-  Certifications
-- Do NOT include a Certifications section unless the original resume explicitly contains real certifications.
+- The tailored_resume field should contain the full resume text with these
+  sections only when supported by the original resume:
+    Contact
+    Professional Summary
+    Technical Skills
+    Professional Experience
+    Projects
+    Education
+    Certifications
+- Do NOT include a Certifications section unless the original resume
+  explicitly contains real certifications.
 - Do NOT write planned, in progress, recommended, future, or suggested certifications.
-- The final resume should look recruiter-ready, modern, concise, and strong enough for direct application.
+- The final resume should look recruiter-ready, modern, concise, and strong
+  enough for direct application.
 
 Candidate Resume:
 {data.resume_text}
@@ -413,6 +549,7 @@ Job Description:
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
+        temperature=0,
         messages=[
             {
                 "role": "system",
@@ -431,6 +568,9 @@ Job Description:
 
     tailored_resume = parsed_response.get("tailored_resume", "")
 
+    # ----------------------------------------------------------------
+    # Strip any "planned certifications" boilerplate the model added.
+    # ----------------------------------------------------------------
     blocked_certification_phrases = [
         "certifications in progress",
         "certification in progress",
@@ -460,7 +600,54 @@ Job Description:
             if not skip_certifications:
                 cleaned_lines.append(line)
 
-        parsed_response["tailored_resume"] = "\n".join(cleaned_lines).strip()
+        tailored_resume = "\n".join(cleaned_lines).strip()
+        parsed_response["tailored_resume"] = tailored_resume
+
+    # ----------------------------------------------------------------
+    # STEP 3: Re-score the TAILORED resume with the EXACT same function.
+    # This guarantees the projected score matches what the user would
+    # see if they re-upload the new resume.
+    # ----------------------------------------------------------------
+    rescored = compare_resume_jd(
+        ResumeJDRequest(
+            resume_text=tailored_resume,
+            job_description=data.job_description,
+        )
+    )
+    new_score = rescored.get("match_score", 0)
+
+    # ----------------------------------------------------------------
+    # STEP 4: Safety net — never return a WORSE resume than the user uploaded.
+    # If our tailoring lowered the score, return the original instead with
+    # an honest explanation.
+    # ----------------------------------------------------------------
+    if new_score < original_score:
+        parsed_response["tailored_resume"] = data.resume_text
+        parsed_response["projected_ats_score_after_tailoring"] = original_score
+        parsed_response["ats_score_reasoning"] = [
+            f"Your resume is already well-aligned with this role at {original_score}/100.",
+            "Our tailoring couldn't add meaningful value without inventing experience.",
+            "Focus on adding real depth in these areas to push higher:",
+            *[g for g in original_gaps[:3] if isinstance(g, str)],
+        ]
+        return parsed_response
+
+    # ----------------------------------------------------------------
+    # STEP 5: Normal path — return the tailored resume with its REAL score
+    # and reasoning derived from the rescore (NOT fabricated by the rewrite).
+    # ----------------------------------------------------------------
+    reasoning_bullets = []
+
+    verdict = rescored.get("recruiter_verdict", "").strip()
+    if verdict:
+        reasoning_bullets.append(verdict)
+
+    for gap in rescored.get("critical_gaps", []):
+        if isinstance(gap, str) and gap.strip():
+            reasoning_bullets.append(gap.strip())
+
+    parsed_response["projected_ats_score_after_tailoring"] = new_score
+    parsed_response["ats_score_reasoning"] = reasoning_bullets
 
     return parsed_response
 
@@ -519,6 +706,7 @@ Job Description:
 
     response = client.chat.completions.create(
         model="gpt-4.1-mini",
+        temperature=0,
         messages=[
             {
                 "role": "system",

@@ -3,7 +3,6 @@
 // Central state for the whole upload → analyze → tailor flow.
 // page.tsx wraps everything in <ResumeAnalysisProvider />, and any
 // component (Hero, AnalysisResults, modals) reads via useResumeAnalysis().
-// This is what replaces the ~20 useState calls in the original page.tsx.
 
 import { useAuth } from "@clerk/nextjs";
 import {
@@ -17,6 +16,7 @@ import {
 
 import {
   compareResumeJD,
+  detectMissingSkills,
   evaluateAnswer,
   extractJDFromUrl,
   generateCoverLetter,
@@ -34,7 +34,7 @@ import type {
 interface ResumeAnalysisContextValue {
   // Inputs
   resume: File | null;
-  resumeText: string;  // cached parsed text from the last upload (shared across pages)
+  resumeText: string;
   jobDescription: string;
   setResume: (f: File | null) => void;
   setResumeText: (v: string) => void;
@@ -60,6 +60,12 @@ interface ResumeAnalysisContextValue {
 
   // Tailored resume
   tailoredResume: TailoredResume | null;
+
+  // Skill confirmation modal (new)
+  missingSkills: string[];
+  showSkillModal: boolean;
+  closeSkillModal: () => void;
+  confirmTailorWithSkills: (confirmedSkills: string[]) => Promise<void>;
 
   // Cover letter
   coverLetter: string | null;
@@ -106,6 +112,13 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
   const [coverLetter, setCoverLetter] = useState<string | null>(null);
   const [coverLetterLoading, setCoverLetterLoading] = useState(false);
 
+  // Skill confirmation modal state.
+  // pendingResumeText caches the parsed resume between "click tailor" and
+  // "user confirms skills" so we don't re-upload the file.
+  const [missingSkills, setMissingSkills] = useState<string[]>([]);
+  const [showSkillModal, setShowSkillModal] = useState(false);
+  const [pendingResumeText, setPendingResumeText] = useState<string>("");
+
   const setMockAnswer = useCallback((index: number, value: string) => {
     setMockAnswers((prev) => ({ ...prev, [index]: value }));
   }, []);
@@ -118,7 +131,6 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
 
-      // If input looks like a URL, fetch the JD first
       let finalJD = jobDescription;
       if (jobDescription.trim().startsWith("http")) {
         setFetchingJD(true);
@@ -133,13 +145,12 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       }
 
       const { resume_text } = await uploadResume(resume);
-      setResumeText(resume_text);  // cache for cover letter + tailored resume pages
+      setResumeText(resume_text);
       const data = await compareResumeJD(resume_text, finalJD);
 
       setInitialAtsScore(data.initial_ats_score ?? null);
       setInitialAtsReasoning(data.initial_ats_reasoning ?? []);
 
-      // Map backend response into ordered sections the tabs read from
       const sections: AnalysisSection[] = [
         { title: "Top Strengths", items: data.top_strengths ?? [] },
         { title: "Critical Gaps", items: data.critical_gaps ?? [] },
@@ -186,7 +197,6 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       ];
       setAnalysis(sections);
 
-      // Save to history (non-blocking — never interrupts the main flow)
       if (userId) {
         const jdSnippet = finalJD.slice(0, 300);
         saveHistory({
@@ -196,7 +206,11 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
           title: jdSnippet.split("\n")[0].slice(0, 80) || "Resume Analysis",
           atsScore: data.initial_ats_score ?? null,
           inputData: { job_description_snippet: jdSnippet },
-          outputData: { ats_score: data.initial_ats_score, ats_reasoning: data.initial_ats_reasoning, sections },
+          outputData: {
+            ats_score: data.initial_ats_score,
+            ats_reasoning: data.initial_ats_reasoning,
+            sections,
+          },
         });
       }
     } catch (err) {
@@ -230,6 +244,52 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
     }
   }, [analysis, currentQuestionIndex, mockAnswers, jobDescription]);
 
+  // Helper that actually runs the tailoring backend call.
+  // Both "no missing skills" and "modal confirmed" paths use this.
+  const runTailoring = useCallback(
+    async (resume_text: string, confirmedSkills: string[]) => {
+      try {
+        setTailoringLoading(true);
+        const data = await generateTailoredResume(
+          resume_text,
+          jobDescription,
+          confirmedSkills,
+        );
+        setTailoredResume(data);
+
+        if (userId) {
+          saveHistory({
+            supabase,
+            userId,
+            feature: "tailored_resume",
+            title:
+              jobDescription.split("\n")[0].slice(0, 80) || "Tailored Resume",
+            atsScore: data.projected_ats_score_after_tailoring ?? null,
+            inputData: {
+              job_description_snippet: jobDescription.slice(0, 300),
+              confirmed_skills: confirmedSkills,
+            },
+            outputData: {
+              projected_ats_score: data.projected_ats_score_after_tailoring,
+              ats_reasoning: data.ats_score_reasoning,
+              tailored_resume: data.tailored_resume,
+            },
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong while generating your tailored resume.");
+      } finally {
+        setTailoringLoading(false);
+      }
+    },
+    [jobDescription, userId, supabase],
+  );
+
+  // Entry point: user clicked "Tailor Resume".
+  // Step 1: upload + detect missing skills
+  // Step 2: if any → show modal (user decides next)
+  //         else  → tailor immediately with empty confirmed_skills
   const generateTailored = useCallback(async () => {
     if (!resume) return alert("Please upload your resume first.");
     if (!jobDescription.trim())
@@ -237,38 +297,64 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
 
     try {
       setTailoringLoading(true);
-      const { resume_text } = await uploadResume(resume);
-      setResumeText(resume_text);  // cache for reuse
-      const data = await generateTailoredResume(resume_text, jobDescription);
-      setTailoredResume(data);
 
-      // Save to history
-      if (userId) {
-        saveHistory({
-          supabase,
-          userId,
-          feature: "tailored_resume",
-          title: jobDescription.split("\n")[0].slice(0, 80) || "Tailored Resume",
-          atsScore: data.projected_ats_score_after_tailoring ?? null,
-          inputData: { job_description_snippet: jobDescription.slice(0, 300) },
-          outputData: {
-            projected_ats_score: data.projected_ats_score_after_tailoring,
-            ats_reasoning: data.ats_score_reasoning,
-            tailored_resume: data.tailored_resume,
-          },
-        });
+      // Reuse cached text if we just analyzed; otherwise parse the file.
+      let textToUse = resumeText;
+      if (!textToUse) {
+        const { resume_text } = await uploadResume(resume);
+        textToUse = resume_text;
+        setResumeText(resume_text);
       }
+
+      // Check which JD tools the resume is missing
+      const { missing_skills } = await detectMissingSkills(
+        textToUse,
+        jobDescription,
+      );
+
+      if (missing_skills.length > 0) {
+        // Stash the parsed text + open the modal. The modal's callback
+        // (confirmTailorWithSkills) will pick up the work from here.
+        setPendingResumeText(textToUse);
+        setMissingSkills(missing_skills);
+        setShowSkillModal(true);
+        setTailoringLoading(false);
+        return;
+      }
+
+      // No missing skills detected → tailor straight through
+      await runTailoring(textToUse, []);
     } catch (err) {
       console.error(err);
-      alert("Something went wrong while generating your tailored resume.");
-    } finally {
       setTailoringLoading(false);
+      alert("Something went wrong while preparing your tailored resume.");
     }
-  }, [resume, jobDescription]);
+  }, [resume, resumeText, jobDescription, runTailoring]);
 
-  // Cover letter generation.
-  // Tries to reuse cached resumeText (set by analyzeJD or generateTailored).
-  // Falls back to re-uploading if user came straight here without analyzing.
+  // Called by the modal after user picks Yes/No for each skill.
+  // Receives the confirmed (Yes) skills list and runs the tailoring.
+  const confirmTailorWithSkills = useCallback(
+    async (confirmedSkills: string[]) => {
+      setShowSkillModal(false);
+      await runTailoring(pendingResumeText, confirmedSkills);
+      // Clear modal state after we're done
+      setPendingResumeText("");
+      setMissingSkills([]);
+    },
+    [pendingResumeText, runTailoring],
+  );
+
+  // Called when user clicks Skip or X on the modal.
+  // Runs tailoring with NO confirmed skills (same as "no missing skills" path).
+  const closeSkillModal = useCallback(async () => {
+    setShowSkillModal(false);
+    if (pendingResumeText) {
+      await runTailoring(pendingResumeText, []);
+    }
+    setPendingResumeText("");
+    setMissingSkills([]);
+  }, [pendingResumeText, runTailoring]);
+
   const generateCoverLetterAction = useCallback(async () => {
     if (!resume && !resumeText) {
       return alert("Please upload your resume first.");
@@ -280,7 +366,6 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
     try {
       setCoverLetterLoading(true);
 
-      // Use cached text if available, otherwise upload + parse the file
       let textToUse = resumeText;
       if (!textToUse && resume) {
         const { resume_text } = await uploadResume(resume);
@@ -291,7 +376,6 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       const data = await generateCoverLetter(textToUse, jobDescription);
       setCoverLetter(data.cover_letter ?? "");
 
-      // Save to history
       if (userId && data.cover_letter) {
         saveHistory({
           supabase,
@@ -333,6 +417,10 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       setMockAnswer,
       feedbackByQuestion,
       tailoredResume,
+      missingSkills,
+      showSkillModal,
+      closeSkillModal,
+      confirmTailorWithSkills,
       coverLetter,
       coverLetterLoading,
       generateCoverLetterAction,
@@ -357,6 +445,10 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
       setMockAnswer,
       feedbackByQuestion,
       tailoredResume,
+      missingSkills,
+      showSkillModal,
+      closeSkillModal,
+      confirmTailorWithSkills,
       coverLetter,
       coverLetterLoading,
       generateCoverLetterAction,
