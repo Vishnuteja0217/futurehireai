@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Mail,
   Mic,
+  Settings,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -96,6 +97,20 @@ export function AppSidebar({
           label="History"
           tileColor="slate"
           active={activePath === "/app/history"}
+          locked={lockedForAnon}
+        />
+      </nav>
+
+      <div className="my-4 h-px bg-slate-100" />
+
+      {/* Account section */}
+      <nav className="flex flex-col gap-0.5">
+        <SidebarItem
+          href="/app/settings"
+          icon={Settings}
+          label="Settings"
+          tileColor="slate"
+          active={activePath === "/app/settings"}
           locked={lockedForAnon}
         />
       </nav>

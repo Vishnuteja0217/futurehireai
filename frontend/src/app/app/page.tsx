@@ -4,10 +4,12 @@ import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 
 import { AnalysisResults } from "@/components/analysis/AnalysisResults";
+import { SkillConfirmationModal } from "@/components/analysis/SkillConfirmationModal";
 import { Hero } from "@/components/landing/Hero";
 import { AtsModal } from "@/components/modals/AtsModal";
 import { JDModal } from "@/components/modals/JDModal";
 import { LimitModal } from "@/components/modals/LimitModal";
+import { useResumeAnalysis } from "@/contexts/ResumeAnalysisContext";
 
 // The /app route — the Analyze page.
 // AppNavbar and FeedbackButton are now provided by /app/layout.tsx,
@@ -18,6 +20,17 @@ export default function AppPage() {
   const [limitOpen, setLimitOpen] = useState(false);
 
   const { isSignedIn } = useUser();
+
+  // Read modal state from the resume-analysis flow.
+  // The Context controls when this modal shows (between /detect-missing-skills
+  // and /generate-tailored-resume).
+  const {
+    missingSkills,
+    showSkillModal,
+    closeSkillModal,
+    confirmTailorWithSkills,
+    tailoringLoading,
+  } = useResumeAnalysis();
 
   return (
     <>
@@ -36,6 +49,17 @@ export default function AppPage() {
         onClose={() => setLimitOpen(false)}
         kind={isSignedIn ? "signed-in" : "anonymous"}
       />
+
+      {/* Skill confirmation flow — shown between detect-missing-skills
+          and generate-tailored-resume. The Context decides when. */}
+      {showSkillModal && (
+        <SkillConfirmationModal
+          missingSkills={missingSkills}
+          onConfirm={confirmTailorWithSkills}
+          onSkip={closeSkillModal}
+          isLoading={tailoringLoading}
+        />
+      )}
     </>
   );
 }

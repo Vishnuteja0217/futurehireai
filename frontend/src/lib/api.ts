@@ -59,8 +59,25 @@ export function evaluateAnswer(
 export function generateTailoredResume(
   resume_text: string,
   job_description: string,
+  confirmed_skills: string[] = [],
 ) {
   return postJSON<TailoredResume>("/generate-tailored-resume", {
+    resume_text,
+    job_description,
+    confirmed_skills,
+  });
+}
+
+/**
+ * Returns tools the JD mentions that aren't on the resume.
+ * Used to ask the candidate "have you actually used these?" before
+ * tailoring, so we can honestly add real experience they forgot to list.
+ */
+export function detectMissingSkills(
+  resume_text: string,
+  job_description: string,
+) {
+  return postJSON<{ missing_skills: string[] }>("/detect-missing-skills", {
     resume_text,
     job_description,
   });
