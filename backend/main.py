@@ -377,19 +377,68 @@ Identify SPECIFIC TOOLS and TECHNOLOGIES that the JD mentions but the
 candidate's resume does NOT clearly include. Return ONLY the tools/technologies
 that are MISSING from the resume.
 
-Strict rules:
-- Return ONLY concrete tools, technologies, languages, frameworks, services,
-  or platforms. Examples: Terraform, Kubernetes, C#, PostgreSQL, GitLab CI,
-  Jenkins, AWS Lambda, React, Spring Boot.
-- DO NOT return soft skills, methodologies (Agile, DevOps), abstract concepts
-  (CI/CD, microservices), seniority levels, years of experience, or role
-  responsibilities.
-- DO NOT return tools that ARE already mentioned in the resume.
-- Maximum 10 items.
-- Items must be specific names, not categories (return "Kubernetes" not "containers").
-- If the resume mentions a related but different tool (e.g., resume has
-  CloudFormation, JD asks Terraform), include the JD's tool as missing —
-  the candidate might have used both.
+STRICT RULES (read carefully — items must pass ALL these tests):
+
+A "tool" qualifies ONLY if it is a SPECIFIC NAMED product/library/service
+that a developer would either use or not use. It must be answerable as a 
+clear binary: "yes I used X" or "no I haven't."
+
+GOOD examples (return these):
+- Terraform (specific tool)
+- Kubernetes (specific platform)
+- PostgreSQL (specific database)
+- GitLab CI (specific platform)
+- Jenkins (specific tool)
+- AWS Lambda (specific service)
+- React, Vue, Angular (specific frameworks)
+- Spring Boot (specific framework)
+- Docker (specific tool)
+- Redis (specific tool)
+
+BAD examples — NEVER return these, even if the JD mentions them:
+- Certifications (CCNA, CCNP, AWS Certified, Microsoft Certified, etc.)
+- Abstract categories ("firewalls", "logging tools", "alerting tools",
+  "monitoring solutions", "databases", "cloud platforms")
+- Conceptual capabilities ("hybrid infrastructure", "enterprise networking",
+  "high availability", "scalability", "disaster recovery")
+- Networking primitives that EVERY engineer has used and can't differentiate
+  on: "subnets", "DNS", "VPNs", "load balancers", "firewalls" (generic),
+  "TCP/IP", "HTTP", "TLS", "SSL", "routing", "switching"
+- Cloud features that are part of using the cloud, not differentiating skills:
+  "VNets", "VPCs", "Network Security Groups", "NSGs", "Security Groups",
+  "IAM roles", "subnets", "route tables"
+- Methodologies (Agile, DevOps, Scrum, Waterfall)
+- Generic concepts (CI/CD, microservices, RESTful APIs, OOP, REST, JSON, XML)
+- Soft skills (leadership, communication, problem-solving)
+- Seniority levels or years of experience
+- Role responsibilities
+- Generic verbs/actions ("monitoring", "automation", "scripting", "deployment")
+
+If you're unsure whether an item is a "tool" — apply BOTH tests:
+
+TEST 1 — Specificity test:
+  Could a developer say "I used <X> for 6 months on a project"? 
+  If yes → continue to test 2. If awkward → skip.
+
+TEST 2 — Differentiation test:
+  Would saying "I used X" on a resume meaningfully differentiate this
+  candidate from any other? Or has EVERY developer used it?
+  - "I used Terraform" → differentiating, not everyone has → KEEP
+  - "I used DNS" → everyone has → SKIP
+  - "I used Subnets" → everyone has → SKIP
+  - "I used Bicep" → Azure-specific, differentiating → KEEP
+  - "I used Akamai" → specific CDN product → KEEP
+
+Both tests must pass. If either fails, exclude the item.
+
+Additional rules:
+- DO NOT return tools already mentioned in the resume.
+- Maximum 8 items.
+- Items must be SPECIFIC NAMES, not categories.
+- If resume mentions a related but different tool (e.g., resume has
+  CloudFormation, JD asks Terraform), include the JD's tool as missing.
+- If the JD has fewer than 3 specific tool names that pass these rules,
+  return an empty list. Better to skip the modal than ask bad questions.
 
 Return ONLY valid JSON. No markdown, no explanations.
 
