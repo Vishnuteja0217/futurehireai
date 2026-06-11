@@ -169,6 +169,39 @@ Your task is to critically evaluate the candidate.
 
 Think like a skeptical technical interviewer.
 
+CRITICAL — required vs preferred qualifications:
+Most JDs separate qualifications into REQUIRED (must-have) and PREFERRED 
+(nice-to-have / bonus). You MUST distinguish these when scoring:
+
+- REQUIRED skills: heavily weighted (~80% of match_score). Missing required 
+  skills is a major penalty.
+- PREFERRED skills: lightly weighted (~20%). Missing preferred skills is a 
+  small or zero penalty. Having preferred skills is a bonus.
+
+Look for JD section headers like: "Required", "Must have", "Qualifications", 
+"Minimum qualifications", "Basic qualifications" → REQUIRED.
+
+And: "Preferred", "Nice to have", "Bonus", "Plus", "Preferred qualifications",
+"Desirable" → PREFERRED.
+
+If the JD doesn't separate them, treat the FIRST listed qualifications as 
+required and any later "preferred" or "bonus" mentions as preferred.
+
+SCORING RULES with this lens:
+- Candidate has ALL required + some preferred → 85-95
+- Candidate has ALL required + zero preferred → 80-88
+- Candidate has 80% of required → 65-78
+- Candidate has 50% of required → 40-60
+- Candidate missing many required → 20-50
+
+A candidate who matches all required qualifications should NEVER score 
+below 78, regardless of how many preferred items they're missing. 
+"Missing preferred" is not a critical gap — it's just not a bonus.
+
+When listing critical_gaps and recruiter_concerns, ONLY include things 
+that are genuinely required for the role. Do not list missing preferred 
+qualifications as critical gaps.
+
 Analyze:
 - what experience appears weak or shallow
 - what recruiter concerns exist
