@@ -188,7 +188,13 @@ function ScoreComparisonCard({
         {/* Arrow */}
         <div className="flex shrink-0 items-center justify-center md:px-2">
           <svg
-            className="h-6 w-6 rotate-90 text-slate-400 md:h-7 md:w-7 md:rotate-0"
+            className={`h-6 w-6 rotate-90 md:h-7 md:w-7 md:rotate-0 ${
+              isImprovement
+                ? "text-emerald-400"
+                : delta === 0
+                ? "text-slate-300"
+                : "text-amber-400"
+            }`}
             fill="none"
             stroke="currentColor"
             strokeWidth={2}
@@ -204,24 +210,63 @@ function ScoreComparisonCard({
         </div>
 
         {/* AFTER */}
-        <div className="flex-1 rounded-2xl border-2 border-emerald-300 bg-emerald-50/60 p-5 text-center">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
+        <div
+          className={`flex-1 rounded-2xl border-2 p-5 text-center ${
+            isImprovement
+              ? "border-emerald-300 bg-emerald-50/60"
+              : delta === 0
+              ? "border-slate-300 bg-slate-50"
+              : "border-amber-300 bg-amber-50"
+          }`}
+        >
+          <p
+            className={`mb-1 text-[10px] font-semibold uppercase tracking-wider ${
+              isImprovement
+                ? "text-emerald-700"
+                : delta === 0
+                ? "text-slate-700"
+                : "text-amber-700"
+            }`}
+          >
             Tailored Resume
           </p>
           <p className="flex items-baseline justify-center gap-0.5">
-            <span className="text-4xl font-bold text-emerald-600 md:text-5xl">
+            <span
+              className={`text-4xl font-bold md:text-5xl ${
+                isImprovement
+                  ? "text-emerald-600"
+                  : delta === 0
+                  ? "text-slate-600"
+                  : "text-amber-600"
+              }`}
+            >
               {tailoredScore}
             </span>
-            <span className="text-xl font-semibold text-emerald-500">%</span>
+            <span
+              className={`text-xl font-semibold ${
+                isImprovement
+                  ? "text-emerald-500"
+                  : delta === 0
+                  ? "text-slate-400"
+                  : "text-amber-500"
+              }`}
+            >
+              %
+            </span>
           </p>
           {isImprovement && (
             <p className="mt-1 text-[11px] font-semibold text-emerald-700">
               +{delta} points
             </p>
           )}
-          {!isImprovement && (
+          {delta === 0 && (
             <p className="mt-1 text-[11px] text-slate-500">
-              Recruiter-ready
+              Same score — already well-aligned
+            </p>
+          )}
+          {delta < 0 && (
+            <p className="mt-1 text-[11px] font-semibold text-amber-700">
+              {delta} points — original is stronger
             </p>
           )}
         </div>

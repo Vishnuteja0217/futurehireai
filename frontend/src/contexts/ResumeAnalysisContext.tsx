@@ -128,6 +128,20 @@ export function ResumeAnalysisProvider({ children }: { children: ReactNode }) {
     if (!jobDescription.trim())
       return alert("Please paste a job description or JD link.");
 
+// Clean slate — clear results from any previous run.
+  // User clicked Analyze fresh, they don't want to see stale tailored data.
+  setTailoredResume(null);
+  setMissingSkills([]);
+  setShowSkillModal(false);
+  setPendingResumeText("");
+  setMockAnswers({});
+  setFeedbackByQuestion({});
+  setCurrentQuestionIndex(0);
+  setCoverLetter(null);
+  setInitialAtsScore(null);
+  setInitialAtsReasoning([]);
+  setAnalysis([]);
+
     try {
       setLoading(true);
 
