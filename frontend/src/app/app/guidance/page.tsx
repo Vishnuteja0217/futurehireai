@@ -33,7 +33,7 @@ export default function GuidancePage() {
         features={[
           "Sessions with real engineers and tech leads",
           "Resume + portfolio review tailored to your goals",
-          "$29 for 30 min · $49 for 60 min",
+          "$14.99 for 30 min · $28.99 for 60 min",
         ]}
         ctaText="Sign up to request a session"
         ctaHref="/sign-up"
@@ -85,7 +85,7 @@ function GuidanceInfo() {
               <span>30 minutes</span>
             </div>
             <div className="mb-1 text-3xl font-semibold text-slate-900">
-              $29
+              $14.99
             </div>
             <div className="mb-4 text-sm text-slate-600">
               Focused conversation
@@ -116,7 +116,7 @@ function GuidanceInfo() {
               <span>60 minutes</span>
             </div>
             <div className="mb-1 text-3xl font-semibold text-slate-900">
-              $49
+              $28.99
             </div>
             <div className="mb-4 text-sm text-slate-600">Deep dive</div>
             <ul className="space-y-2 text-sm text-slate-700">
