@@ -621,7 +621,10 @@ def build_cache_key(role: str, location: str, exp: str) -> str:
     'software engineer  ' hit the same cache entry.
     """
     normalized = f"{role.lower().strip()}|{location.lower().strip()}|{exp.lower().strip()}"
-    return hashlib.md5(normalized.encode()).hexdigest()
+    # SHA-256 (not for security — just a stable content-addressable cache key).
+    # We use SHA over MD5 to keep security scanners happy; the crypto strength
+    # doesn't matter because cache keys aren't secret.
+    return hashlib.sha256(normalized.encode()).hexdigest()
 
 
 # 24-hour cache TTL. Jobs change daily on major boards.
@@ -776,7 +779,7 @@ def _format_location(job: dict) -> str:
         job.get("job_country", ""),
     ]
     return ", ".join(p for p in parts if p)
-
+ 
 
 def _truncate(text: str, max_length: int) -> str:
     """Truncate text with ellipsis if too long."""
