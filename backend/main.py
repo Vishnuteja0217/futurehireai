@@ -40,6 +40,15 @@ app.add_middleware(
 # OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# Supabase client for caching job search results.
+# We use the SERVICE KEY (not anon key) because this is server-side
+# and needs to bypass RLS on internal tables like job_search_cache.
+from supabase import create_client as create_supabase_client
+supabase = create_supabase_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_SERVICE_KEY"),
+)
+
 def add_horizontal_line(paragraph):
     p = paragraph._p
     pPr = p.get_or_add_pPr()
@@ -521,6 +530,264 @@ Job Description:
             break
 
     return {"missing_skills": clean_skills}
+
+# ============================================================================
+# Job Search Endpoint (/search-jobs)
+# ============================================================================
+# Uses JSearch API (RapidAPI) to find jobs and enriches results with H1B
+# sponsor data from USCIS FY2025 LCA disclosure data.
+#
+# Flow:
+#   1. Frontend sends { role, location, experience_level }
+#   2. We call JSearch to get raw job listings
+#   3. For each job, we look up the employer in h1b_sponsors.json
+#      to determine H1B sponsorship history
+#   4. We sort so H1B sponsors appear FIRST
+#   5. Return enriched, sorted jobs to frontend
+# ============================================================================
+
+# Load H1B sponsor data ONCE at startup (not on every request).
+# This is a ~2MB JSON with 62,983 companies mapped to their H1B filing counts.
+_H1B_SPONSORS_PATH = os.path.join(
+    os.path.dirname(__file__), "data", "h1b_sponsors.json"
+)
+
+try:
+    with open(_H1B_SPONSORS_PATH, "r", encoding="utf-8") as f:
+        H1B_SPONSORS = json.load(f)
+    print(f"Loaded {len(H1B_SPONSORS):,} H1B sponsors")
+except FileNotFoundError:
+    print(f"WARNING: h1b_sponsors.json not found at {_H1B_SPONSORS_PATH}")
+    H1B_SPONSORS = {}
+
+
+def normalize_company_name(name: str) -> str:
+    """Normalize company name for H1B lookup.
+    
+    JSearch returns names like 'Microsoft', 'Microsoft Corporation',
+    'Microsoft Corp' — but our USCIS data uses 'MICROSOFT CORPORATION'.
+    We uppercase everything and strip whitespace to improve match rate.
+    """
+    if not name:
+        return ""
+    return name.upper().strip()
+
+
+def check_h1b_sponsor(company_name: str) -> dict:
+    """Check if a company sponsors H1B visas.
+    
+    Returns:
+        {
+            "is_sponsor": bool,        # True if company found in USCIS data
+            "filings_count": int,      # Number of H1B filings in FY2025
+        }
+    
+    Matching strategy:
+        1. Exact match on normalized name (fastest, most confident)
+        2. Substring match — check if any H1B sponsor contains this name
+           (catches "Google" matching "GOOGLE LLC")
+    """
+    normalized = normalize_company_name(company_name)
+    if not normalized:
+        return {"is_sponsor": False, "filings_count": 0}
+    
+    # Strategy 1: exact match
+    if normalized in H1B_SPONSORS:
+        return {
+            "is_sponsor": True,
+            "filings_count": H1B_SPONSORS[normalized],
+        }
+    
+    # Strategy 2: substring match (Google → GOOGLE LLC)
+    # We check if the JSearch company name appears at the start of any 
+    # sponsor name — avoids false matches like "APPLE" matching "PINEAPPLE INC"
+    for sponsor_name, count in H1B_SPONSORS.items():
+        if sponsor_name.startswith(normalized + " ") or sponsor_name == normalized:
+            return {
+                "is_sponsor": True,
+                "filings_count": count,
+            }
+    
+    return {"is_sponsor": False, "filings_count": 0}
+
+import hashlib
+from datetime import datetime, timezone, timedelta
+
+
+def build_cache_key(role: str, location: str, exp: str) -> str:
+    """Build a stable hash key for cache lookups.
+    
+    Normalizes inputs (lowercase, strip) so 'Software Engineer' and
+    'software engineer  ' hit the same cache entry.
+    """
+    normalized = f"{role.lower().strip()}|{location.lower().strip()}|{exp.lower().strip()}"
+    # SHA-256 (not for security — just a stable content-addressable cache key).
+    # We use SHA over MD5 to keep security scanners happy; the crypto strength
+    # doesn't matter because cache keys aren't secret.
+    return hashlib.sha256(normalized.encode()).hexdigest()
+
+
+# 24-hour cache TTL. Jobs change daily on major boards.
+CACHE_TTL_HOURS = 24
+
+class JobSearchRequest(BaseModel):
+    role: str                     # e.g. "Software Engineer"
+    location: str = ""            # optional; e.g. "Austin, TX" or "United States"
+    experience_level: str = ""    # optional; e.g. "entry_level", "mid_level", "senior_level"
+
+
+@app.post("/search-jobs")
+def search_jobs(data: JobSearchRequest):
+    """Search for jobs and mark H1B sponsors.
+    
+    Flow:
+      1. Check Supabase cache — if hit within 24h, return cached result
+      2. Cache miss → call JSearch API
+      3. Enrich with H1B sponsor data
+      4. Sort (H1B sponsors first)
+      5. Store in cache for next 24h
+      6. Return
+    
+    Cache is keyed on (role + location + exp). Same query from any user
+    within 24h reuses the cached result — dramatically extends the 200
+    free JSearch calls/month.
+    """
+    cache_key = build_cache_key(data.role, data.location, data.experience_level)
+    
+    # ---- STEP 1: Check cache ----
+    try:
+        cached = supabase.table("job_search_cache") \
+            .select("jobs_json, cached_at") \
+            .eq("cache_key", cache_key) \
+            .maybe_single() \
+            .execute()
+        
+        if cached and cached.data:
+            cached_at = datetime.fromisoformat(cached.data["cached_at"].replace("Z", "+00:00"))
+            age = datetime.now(timezone.utc) - cached_at
+            
+            if age < timedelta(hours=CACHE_TTL_HOURS):
+                # Still fresh — return cached
+                jobs = cached.data["jobs_json"]
+                return {
+                    "jobs": jobs,
+                    "total_returned": len(jobs),
+                    "h1b_sponsors_count": sum(1 for j in jobs if j.get("h1b_sponsor")),
+                    "query": f"{data.role} in {data.location}".strip(),
+                    "cached": True,
+                    "cache_age_hours": round(age.total_seconds() / 3600, 1),
+                }
+    except Exception as e:
+        # Cache is best-effort — if it fails, just skip and hit JSearch
+        print(f"Cache read failed (non-fatal): {e}")
+    
+    # ---- STEP 2: Cache miss → call JSearch ----
+    api_key = os.getenv("JSEARCH_API_KEY")
+    if not api_key:
+        return {"error": "JSearch API key not configured", "jobs": []}
+    
+    query_parts = [data.role]
+    if data.location:
+        query_parts.append(f"in {data.location}")
+    query_string = " ".join(query_parts).strip()
+    
+    url = "https://jsearch.p.rapidapi.com/search"
+    headers = {
+        "X-RapidAPI-Key": api_key,
+        "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
+    }
+    params = {
+        "query": query_string,
+        "page": "1",
+        "num_pages": "1",
+        "country": "us",
+        "date_posted": "month",
+    }
+    if data.experience_level:
+        params["job_requirements"] = data.experience_level
+    
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=15)
+        response.raise_for_status()
+        jsearch_data = response.json()
+    except requests.exceptions.RequestException as e:
+        return {"error": f"JSearch API failed: {str(e)}", "jobs": []}
+    
+    raw_jobs = jsearch_data.get("data", [])
+    
+    # ---- STEP 3: Enrich with H1B data ----
+    enriched_jobs = []
+    for job in raw_jobs:
+        employer = job.get("employer_name", "")
+        h1b_info = check_h1b_sponsor(employer)
+        
+        enriched_jobs.append({
+            "job_id": job.get("job_id", ""),
+            "title": job.get("job_title", ""),
+            "company": employer,
+            "company_logo": job.get("employer_logo", ""),
+            "location": _format_location(job),
+            "job_type": job.get("job_employment_type", ""),
+            "is_remote": job.get("job_is_remote", False),
+            "posted_at": job.get("job_posted_at_datetime_utc", ""),
+            "salary_min": job.get("job_min_salary"),
+            "salary_max": job.get("job_max_salary"),
+            "salary_period": job.get("job_salary_period", ""),
+            "description_snippet": _truncate(job.get("job_description", ""), 300),
+            "apply_url": job.get("job_apply_link", ""),
+            "source": job.get("job_publisher", ""),
+            "h1b_sponsor": h1b_info["is_sponsor"],
+            "h1b_filings_2025": h1b_info["filings_count"],
+        })
+    
+    # ---- STEP 4: Sort (H1B sponsors first) ----
+    enriched_jobs.sort(
+        key=lambda j: (
+            0 if j["h1b_sponsor"] else 1,
+            -j["h1b_filings_2025"],
+        )
+    )
+    
+    # ---- STEP 5: Store in cache (best-effort, don't fail request) ----
+    try:
+        supabase.table("job_search_cache").upsert({
+            "cache_key": cache_key,
+            "query_role": data.role,
+            "query_location": data.location,
+            "query_exp": data.experience_level,
+            "jobs_json": enriched_jobs,
+            "cached_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+    except Exception as e:
+        print(f"Cache write failed (non-fatal): {e}")
+    
+    # ---- STEP 6: Return ----
+    return {
+        "jobs": enriched_jobs,
+        "total_returned": len(enriched_jobs),
+        "h1b_sponsors_count": sum(1 for j in enriched_jobs if j["h1b_sponsor"]),
+        "query": query_string,
+        "cached": False,
+    }
+
+
+def _format_location(job: dict) -> str:
+    """Combine city, state, country into a readable location string."""
+    parts = [
+        job.get("job_city", ""),
+        job.get("job_state", ""),
+        job.get("job_country", ""),
+    ]
+    return ", ".join(p for p in parts if p)
+ 
+
+def _truncate(text: str, max_length: int) -> str:
+    """Truncate text with ellipsis if too long."""
+    if not text:
+        return ""
+    if len(text) <= max_length:
+        return text
+    return text[:max_length].rsplit(" ", 1)[0] + "..."
 
 @app.post("/generate-tailored-resume")
 def generate_tailored_resume(data: TailorResumeRequest):
