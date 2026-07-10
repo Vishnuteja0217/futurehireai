@@ -6,3 +6,8 @@ backend/*.docx
 
 frontend/node_modules/
 frontend/.next/
+
+# H1B source data — these are ~345MB Excel files used only to generate
+# h1b_sponsors.json. The JSON is committed; the raw source is not.
+backend/data/h1b/
+backend/data/h1b/*.xlsx
