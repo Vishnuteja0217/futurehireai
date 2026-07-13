@@ -771,6 +771,48 @@ def search_jobs(data: JobSearchRequest):
         "cached": False,
     }
 
+@app.get("/job-details/{job_id}")
+def get_job_details(job_id: str):
+    """
+    Fetch a single job by ID from the Supabase cache.
+    
+    Detail pages call this when a user hits /app/jobs/[job_id] directly
+    (new tab, shared URL, refresh) and doesn't have the job in sessionStorage.
+    
+    Scans all recent cached searches for the job — free but limited to
+    jobs that appeared in a search within the last 24h. Anything older
+    returns 404. That's acceptable for v1 — most shared job links get 
+    clicked quickly.
+    """
+    try:
+        # URL-decode the job_id — frontend encodes it because JSearch IDs
+        # contain characters like = and / that break URL routing.
+        from urllib.parse import unquote
+        decoded_id = unquote(job_id)
+        
+        # Query all rows in job_search_cache and scan for the job
+        cached_rows = supabase.table("job_search_cache") \
+            .select("jobs_json") \
+            .execute()
+        
+        if not cached_rows.data:
+            return {"error": "Job not found. Try searching again."}
+        
+        # Scan every cached search for the matching job_id
+        for row in cached_rows.data:
+            jobs = row.get("jobs_json", [])
+            if not jobs:
+                continue
+            for job in jobs:
+                if job.get("job_id") == decoded_id:
+                    return {"job": job}
+        
+        # Nothing found — job is either fake, from a very old search, or the cache expired
+        return {"error": "Job not found. Try searching again."}
+    
+    except Exception as e:
+        print(f"/job-details error: {e}")
+        return {"error": "Failed to fetch job details."}
 
 def _format_location(job: dict) -> str:
     """Combine city, state, country into a readable location string."""
