@@ -6,6 +6,7 @@ import { API_BASE_URL } from "./constants";
 import type {
   AnswerFeedback,
   CompareResumeResponse,
+  Job,
   JobSearchResponse,
   TailoredResume,
 } from "./types";
@@ -170,5 +171,20 @@ export function searchJobs(
     role,
     location,
     experience_level,
+  });
+}
+
+/**
+ * Fetch a single job by ID from the backend cache.
+ * Used on job detail pages when sessionStorage doesn't have the job
+ * (new tab, shared URL, refresh after cache clear).
+ */
+export function getJobDetails(job_id: string) {
+  return fetch(`${API_BASE_URL}/job-details/${encodeURIComponent(job_id)}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  }).then(async (res) => {
+    if (!res.ok) throw new Error(`API /job-details failed with ${res.status}`);
+    return res.json() as Promise<{ job?: Job; error?: string }>;
   });
 }

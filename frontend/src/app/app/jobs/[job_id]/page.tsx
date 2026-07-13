@@ -24,6 +24,7 @@ import {
   downloadTailoredResume,
   generateCoverLetter,
   generateTailoredResume,
+  getJobDetails,
 } from "@/lib/api";
 import type {
   CompareResumeResponse,
@@ -92,14 +93,35 @@ export default function JobDetailPage() {
   // Modal state: which "View" was clicked — 'tailored' | 'cover' | null
   const [openModal, setOpenModal] = useState<null | "tailored" | "cover">(null);
 
-  // Hydrate from sessionStorage on mount
+  // Hydrate from sessionStorage first, fall back to backend fetch.
+  // This lets people open jobs in new tabs / share URLs without breaking.
   useEffect(() => {
-    const results = readSS<JobSearchResponse | null>(SS_KEYS.jobs, null);
-    const foundJob = results?.jobs.find((j) => j.job_id === jobId) ?? null;
-    const savedResume = readSS<string | null>(SS_KEYS.resumeText, null);
-    setJob(foundJob);
-    setResumeText(savedResume);
-    setHydrated(true);
+    (async () => {
+      const savedResume = readSS<string | null>(SS_KEYS.resumeText, null);
+      setResumeText(savedResume);
+
+      // Try sessionStorage first (fast)
+      const results = readSS<JobSearchResponse | null>(SS_KEYS.jobs, null);
+      const foundJob = results?.jobs.find((j) => j.job_id === jobId) ?? null;
+
+      if (foundJob) {
+        setJob(foundJob);
+        setHydrated(true);
+        return;
+      }
+
+      // Fall back to backend fetch
+      try {
+        const { job: fetchedJob } = await getJobDetails(jobId);
+        if (fetchedJob) {
+          setJob(fetchedJob);
+        }
+      } catch {
+        // If fetch fails, job stays null → "Job not found" UI renders
+      } finally {
+        setHydrated(true);
+      }
+    })();
   }, [jobId]);
 
   // Auto-calculate ATS as soon as we have both a job and a resume.
