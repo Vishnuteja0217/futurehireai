@@ -699,7 +699,7 @@ def search_jobs(data: JobSearchRequest):
     params = {
         "query": query_string,
         "page": "1",
-        "num_pages": "1",
+        "num_pages": "2",
         "country": "us",
         "date_posted": "month",
     }
@@ -729,6 +729,7 @@ def search_jobs(data: JobSearchRequest):
             "location": _format_location(job),
             "job_type": job.get("job_employment_type", ""),
             "is_remote": job.get("job_is_remote", False),
+            "work_arrangement": _detect_work_arrangement(job),
             "posted_at": job.get("job_posted_at_datetime_utc", ""),
             "salary_min": job.get("job_min_salary"),
             "salary_max": job.get("job_max_salary"),
@@ -741,13 +742,20 @@ def search_jobs(data: JobSearchRequest):
             "h1b_filings_2025": h1b_info["filings_count"],
         })
     
-    # ---- STEP 4: Sort (H1B sponsors first) ----
-    enriched_jobs.sort(
-        key=lambda j: (
-            0 if j["h1b_sponsor"] else 1,
-            -j["h1b_filings_2025"],
-        )
-    )
+    # ---- STEP 4: Sort — H1B sponsors first, then most recent first ----
+    def _sort_key(j):
+        is_h1b_priority = 0 if j["h1b_sponsor"] else 1
+        # Parse posted_at as datetime for sorting; unparseable → very old
+        posted_str = j.get("posted_at", "")
+        try:
+            posted_dt = datetime.fromisoformat(posted_str.replace("Z", "+00:00"))
+            posted_timestamp = posted_dt.timestamp()
+        except (ValueError, AttributeError):
+            posted_timestamp = 0
+        # Negative timestamp for descending sort (newest first)
+        return (is_h1b_priority, -posted_timestamp)
+    
+    enriched_jobs.sort(key=_sort_key)
     
     # ---- STEP 5: Store in cache (best-effort, don't fail request) ----
     try:
@@ -823,6 +831,23 @@ def _format_location(job: dict) -> str:
     ]
     return ", ".join(p for p in parts if p)
  
+def _detect_work_arrangement(job: dict) -> str:
+    """Infer 'remote' | 'hybrid' | 'onsite' from JSearch job data.
+    
+    JSearch gives us is_remote (clear) but doesn't distinguish hybrid vs
+    onsite. We scan the JD text for 'hybrid' as a heuristic — imperfect
+    but better than nothing.
+    """
+    if job.get("job_is_remote"):
+        return "remote"
+    
+    # Scan JD text for hybrid indicators
+    description = (job.get("job_description") or "").lower()
+    hybrid_signals = ["hybrid", "flexible schedule", "remote-flex", "3 days in office", "2 days remote"]
+    if any(signal in description for signal in hybrid_signals):
+        return "hybrid"
+    
+    return "onsite"
 
 def _truncate(text: str, max_length: int) -> str:
     """Truncate text with ellipsis if too long."""
