@@ -1,12 +1,12 @@
-import { Github, Linkedin, Sparkles, Twitter } from "lucide-react";
+import { Instagram, Linkedin, Sparkles } from "lucide-react";
 
 const columns = [
   {
     title: "Product",
     links: [
       { label: "Features", href: "#features" },
-      { label: "How it Works", href: "#how-it-works" },
-      { label: "Roadmap", href: "#roadmap" },
+      { label: "How it works", href: "#how-it-works" },
+      { label: "Browse jobs", href: "/app/jobs" },
     ],
   },
   {
@@ -38,7 +38,7 @@ export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white px-6 pb-10 pt-16">
       <div className="mx-auto w-full max-w-7xl">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-6">
+        <div className="grid grid-cols-2 gap-10 md:grid-cols-6 md:items-start">
           <div className="col-span-2">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
@@ -49,29 +49,27 @@ export function Footer() {
               </span>
             </div>
             <p className="mt-4 max-w-xs text-sm leading-6 text-slate-600">
-              AI-powered career intelligence helping you get interview-ready and
-              land your dream job.
+              H1B sponsor data + honest ATS scoring. 
+              <br />
+              Job search, done right.
             </p>
 
             <div className="mt-5 flex gap-3">
-              <SocialLink href="#" label="Twitter">
-                <Twitter className="h-4 w-4" />
-              </SocialLink>
               <SocialLink href="#" label="LinkedIn">
                 <Linkedin className="h-4 w-4" />
               </SocialLink>
-              <SocialLink href="#" label="Code">
-                 <Github className="h-4 w-4" />
+              <SocialLink href="#" label="Instagram">
+                <Instagram className="h-4 w-4" />
               </SocialLink>
             </div>
           </div>
 
           {columns.map((col) => (
             <div key={col.title}>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
                 {col.title}
               </p>
-              <ul className="mt-4 space-y-3">
+              <ul className="space-y-2.5">
                 {col.links.map((l) => (
                   <li key={l.label}>
                     <a
@@ -88,8 +86,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 border-t border-slate-200 pt-6 text-center text-xs text-slate-500">
-          © {new Date().getFullYear()} FutureHireAI. All rights reserved. ·
-          Built for the modern job hunt.
+          © {new Date().getFullYear()} FutureHireAI. All rights reserved.
         </div>
       </div>
     </footer>

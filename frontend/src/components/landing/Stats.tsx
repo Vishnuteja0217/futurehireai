@@ -1,41 +1,45 @@
 "use client";
 
-import { Bot, Clock, Sparkles, Zap } from "lucide-react";
+import { Briefcase, FileCheck2, Globe, Shield } from "lucide-react";
 
-// Honest beta-stage stats. Easy to swap in real numbers once you have them.
-// IMPORTANT: don't put "12K+ resumes analyzed" unless that's actually true —
-// testers will smell the inflation and lose trust.
+// Real, defensible stats. Nothing inflated — every number here traces to
+// verifiable data (USCIS filings, JSearch coverage, our own scoring model).
+// If you can't cite the source, don't put it here.
 const stats = [
   {
-    icon: Sparkles,
-    value: "AI-First",
-    label: "Built for the modern job hunt",
+    icon: Briefcase,
+    value: "62,983",
+    label: "H1B sponsor companies",
+    sub: "USCIS FY2025 LCA filings",
     iconBg: "bg-blue-100 text-blue-600",
   },
   {
-    icon: Zap,
-    value: "Instant",
-    label: "Resume × JD analysis",
+    icon: Globe,
+    value: "10+",
+    label: "Job platforms indexed",
+    sub: "LinkedIn, Indeed, Glassdoor & more",
     iconBg: "bg-indigo-100 text-indigo-600",
   },
   {
-    icon: Bot,
-    value: "Mock",
-    label: "Interview practice rounds",
+    icon: FileCheck2,
+    value: "Real",
+    label: "ATS scores",
+    sub: "No inflation. No vanity numbers.",
     iconBg: "bg-emerald-100 text-emerald-600",
   },
   {
-    icon: Clock,
-    value: "24/7",
-    label: "Always-on AI assistant",
+    icon: Shield,
+    value: "USCIS",
+    label: "Sponsor data source",
+    sub: "Official government filings",
     iconBg: "bg-amber-100 text-amber-600",
   },
 ];
 
 export function Stats() {
   return (
-    <section className="px-6 py-12">
-      <div className="mx-auto w-full max-w-7xl rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-sm md:px-10">
+    <section className="px-6 py-8">
+      <div className="mx-auto w-full max-w-7xl rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-sm md:px-10">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           {stats.map((s) => {
             const Icon = s.icon;
@@ -49,12 +53,15 @@ export function Stats() {
                 >
                   <Icon className="h-5 w-5" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xl font-bold text-slate-900 md:text-2xl">
                     {s.value}
                   </p>
-                  <p className="text-xs text-slate-500 md:text-sm">
+                  <p className="text-xs font-medium text-slate-700 md:text-sm">
                     {s.label}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-tight text-slate-400">
+                    {s.sub}
                   </p>
                 </div>
               </div>

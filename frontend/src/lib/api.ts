@@ -6,6 +6,7 @@ import { API_BASE_URL } from "./constants";
 import type {
   AnswerFeedback,
   CompareResumeResponse,
+  JobSearchResponse,
   TailoredResume,
 } from "./types";
 
@@ -150,4 +151,24 @@ export async function downloadCoverLetter(
   a.click();
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
+}
+
+/**
+ * Search for jobs and enrich with H1B sponsor data.
+ * Backend hits JSearch (RapidAPI), looks up each employer in the USCIS
+ * H1B sponsor JSON, and returns jobs with H1B sponsors ranked first.
+ *
+ * Cached for 24h in Supabase — same (role + location + experience_level)
+ * within 24h returns instantly with cached: true.
+ */
+export function searchJobs(
+  role: string,
+  location: string = "",
+  experience_level: string = "",
+) {
+  return postJSON<JobSearchResponse>("/search-jobs", {
+    role,
+    location,
+    experience_level,
+  });
 }

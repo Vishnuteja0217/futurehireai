@@ -1,13 +1,12 @@
 "use client";
 
 import {
+  Briefcase,
   ChartBar,
   Clock,
   ClipboardList,
   Mail,
-  Mic,
   Settings,
-  Sparkles,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -40,6 +39,14 @@ export function AppSidebar({
       {/* Core features */}
       <nav className="flex flex-col gap-0.5">
         <SidebarItem
+          href="/app/jobs"
+          icon={Briefcase}
+          label="Jobs"
+          tileColor="blue"
+          active={activePath === "/app/jobs"}
+          locked={lockedForAnon}
+        />
+        <SidebarItem
           href="/app"
           icon={ChartBar}
           label="Analyze"
@@ -47,27 +54,11 @@ export function AppSidebar({
           active={activePath === "/app"}
         />
         <SidebarItem
-          href="/app/candidate-evaluation"
-          icon={Sparkles}
-          label="Candidate Evaluation"
-          tileColor="purple"
-          active={activePath === "/app/candidate-evaluation"}
-          locked={lockedForAnon}
-        />
-        <SidebarItem
           href="/app/cover-letter"
           icon={Mail}
           label="Cover Letter"
           tileColor="coral"
           active={activePath === "/app/cover-letter"}
-          locked={lockedForAnon}
-        />
-        <SidebarItem
-          href="/app/mock-interview"
-          icon={Mic}
-          label="Mock Interview"
-          tileColor="green"
-          active={activePath === "/app/mock-interview"}
           locked={lockedForAnon}
         />
         <SidebarItem

@@ -63,3 +63,37 @@ export interface JobApplication {
   created_at: string;
   updated_at: string;
 }
+
+// ── Job Search (JSearch + H1B enrichment) ─────────────────────────────────────
+// Returned by POST /search-jobs. Mirrors the enriched job objects the backend
+// assembles (JSearch response fields + H1B sponsor lookup from USCIS data).
+
+export interface Job {
+  job_id: string;
+  title: string;
+  company: string;
+  company_logo: string | null;
+  location: string;
+  job_type: string;              // "Full-time", "Contractor", etc.
+  is_remote: boolean;
+  posted_at: string;             // ISO datetime string
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_period: string | null;  // "YEAR", "HOUR", etc.
+  description_snippet: string;
+  description_full: string;      // Full JD text (used for ATS scoring)
+  apply_url: string;
+  source: string;                // "LinkedIn", "Indeed", company site name
+  h1b_sponsor: boolean;          // True if employer found in USCIS FY2025 data
+  h1b_filings_2025: number;      // Certified filing count (0 if not a sponsor)
+}
+
+export interface JobSearchResponse {
+  jobs: Job[];
+  total_returned: number;
+  h1b_sponsors_count: number;
+  query: string;                 // The search string sent to JSearch
+  cached?: boolean;              // True if returned from Supabase cache
+  cache_age_hours?: number;      // How stale the cached result is
+  error?: string;                // Present on failure (missing key, JSearch down)
+}

@@ -1,4 +1,3 @@
-import { ComingSoon } from "@/components/landing/ComingSoon";
 import { CTA } from "@/components/landing/CTA";
 import { Features } from "@/components/landing/Features";
 import { FeedbackButton } from "@/components/landing/FeedbackButton";
@@ -20,7 +19,6 @@ export default function Home() {
         <Stats />
         <Features />
         <HowItWorks />
-        <ComingSoon />
         <CTA />
       </main>
 

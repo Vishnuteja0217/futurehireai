@@ -4,10 +4,11 @@ import { Show, UserButton } from "@clerk/nextjs";
 import { Sparkles } from "lucide-react";
 import Link from "next/link";
 
+// Nav items match the sections that actually exist on the landing page.
+// If a section gets removed, drop it here so links don't scroll to nothing.
 const navItems = [
   { label: "Features", href: "#features" },
-  { label: "How it Works", href: "#how-it-works" },
-  { label: "Roadmap", href: "#roadmap" },
+  { label: "How it works", href: "#how-it-works" },
 ];
 
 export function MarketingNavbar() {
@@ -22,11 +23,11 @@ export function MarketingNavbar() {
             FutureHire<span className="text-blue-600">AI</span>
           </span>
         </Link>
-
+        
         <div className="hidden items-center gap-8 md:flex">
           {navItems.map((item) => (
             <a
-                        key={item.label}
+              key={item.label}
               href={item.href}
               className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
             >
@@ -37,28 +38,28 @@ export function MarketingNavbar() {
 
         <div className="flex items-center gap-3">
           <Show when="signed-out">
-  <Link
-    href="/sign-in"
-    className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-  >
-    Sign in
-  </Link>
-  <Link
-    href="/app"
-    className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/30"
-  >
-    Try Beta Free
-  </Link>
-</Show>
-<Show when="signed-in">
-  <Link
-    href="/app"
-    className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-  >
-    Open App
-  </Link>
-  <UserButton />
-</Show>
+            <Link
+              href="/sign-in"
+              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/app/jobs"
+              className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-md hover:shadow-blue-600/30"
+            >
+              Browse jobs
+            </Link>
+          </Show>
+          <Show when="signed-in">
+            <Link
+              href="/app/jobs"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            >
+              Browse jobs
+            </Link>
+            <UserButton />
+          </Show>
         </div>
       </div>
     </nav>

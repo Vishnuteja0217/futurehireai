@@ -1,63 +1,54 @@
 import {
-  BarChart3,
   Briefcase,
-  FileText,
-  Lightbulb,
-  MessagesSquare,
+  ClipboardList,
+  FileCheck2,
+  Sparkles,
 } from "lucide-react";
 
-// 5 features, mirroring the reference. Keep titles short so cards align.
-// Edit `description` to match your actual product capabilities.
+// 4 features that reflect what the product ACTUALLY does today.
+// If we can't ship it in v1, it doesn't go here — no vaporware promises.
 const features = [
   {
-    icon: FileText,
-    title: "AI Resume Analyzer",
+    icon: Briefcase,
+    title: "H1B-friendly job search",
     description:
-      "Get AI-powered feedback to improve your resume and beat ATS systems before you hit apply.",
+      "Real jobs from LinkedIn, Indeed, and company sites. Companies that actually sponsor H1B visas are ranked first — verified against USCIS filings.",
     iconBg: "bg-blue-100 text-blue-600",
   },
   {
-    icon: MessagesSquare,
-    title: "Interview Preparation",
+    icon: FileCheck2,
+    title: "Honest ATS scoring",
     description:
-      "Practice role-specific interviews with realistic mock sessions and instant AI feedback.",
+      "See exactly how your resume matches each job. No vanity numbers — a 40 means 40. We tell you where you fit and where you lack.",
     iconBg: "bg-indigo-100 text-indigo-600",
   },
   {
-    icon: BarChart3,
-    title: "ATS Score Intelligence",
+    icon: Sparkles,
+    title: "Tailored per job, in one click",
     description:
-      "Analyze and improve your ATS score with concrete, actionable recommendations.",
+      "Improve your resume for a specific role with a single click. Download in DOCX or PDF, ready to send.",
     iconBg: "bg-emerald-100 text-emerald-600",
   },
   {
-    icon: Lightbulb,
-    title: "Career Insights",
+    icon: ClipboardList,
+    title: "Application tracker",
     description:
-      "Discover skill gaps, in-demand skills, and personalized career tips tied to your goals.",
+      "Every job you apply to, in one place. Track status, notes, and outcomes — no more scattered spreadsheets.",
     iconBg: "bg-amber-100 text-amber-600",
-  },
-  {
-    icon: Briefcase,
-    title: "AI Job Applications",
-    description:
-      "Apply to jobs directly from FutureHireAI with one click — backed by AI tailoring.",
-    iconBg: "bg-rose-100 text-rose-600",
-    comingSoon: true,
   },
 ];
 
 export function Features() {
   return (
-    <section id="features" className="px-6 py-20">
+    <section id="features" className="px-6 py-12">
       <div className="mx-auto w-full max-w-7xl">
         <SectionHeading
-          eyebrow="Powerful Features"
-          title="Everything You Need to Succeed"
-          subtitle="FutureHireAI gives you the tools and insights to stand out and get hired."
+          eyebrow="What we do"
+          title="Everything you need — nothing you don't."
+          subtitle="Find jobs. Score them honestly. Tailor and apply. That's the loop."
         />
 
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => {
             const Icon = f.icon;
             return (
@@ -65,12 +56,6 @@ export function Features() {
                 key={f.title}
                 className="group relative flex flex-col rounded-2xl border border-slate-200 bg-white p-6 transition-all hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg"
               >
-                {f.comingSoon && (
-                  <span className="absolute right-4 top-4 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
-                    Coming Soon
-                  </span>
-                )}
-
                 <div
                   className={`flex h-11 w-11 items-center justify-center rounded-xl ${f.iconBg}`}
                 >
