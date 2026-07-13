@@ -60,6 +60,37 @@ function clearSS(key: string) {
   }
 }
 
+// localStorage variants — used for resume text which needs to persist
+// across tabs. localStorage survives new tabs, refreshes, and browser
+// restarts. sessionStorage does not.
+function readLS<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeLS(key: string, value: unknown) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore quota/private mode
+  }
+}
+
+function clearLS(key: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
+
 // /app/jobs — job discovery with H1B sponsor ranking.
 //
 // V1 scope (this file):
@@ -81,10 +112,10 @@ export default function JobsPage() {
   // Resume state — browser session, survives navigation via sessionStorage.
   // We hydrate lazily so the initial render doesn't touch window on SSR.
   const [resumeText, setResumeText] = useState<string | null>(() =>
-    readSS<string | null>(SS_KEYS.resumeText, null),
+    readLS<string | null>(SS_KEYS.resumeText, null),
   );
   const [resumeFileName, setResumeFileName] = useState<string | null>(() =>
-    readSS<string | null>(SS_KEYS.resumeFileName, null),
+    readLS<string | null>(SS_KEYS.resumeFileName, null),
   );
   const [resumeUploading, setResumeUploading] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
@@ -134,8 +165,8 @@ async function handleResumeUpload(file: File) {
       const { resume_text } = await uploadResume(file);
       setResumeText(resume_text);
       setResumeFileName(file.name);
-      writeSS(SS_KEYS.resumeText, resume_text);
-      writeSS(SS_KEYS.resumeFileName, file.name);
+      writeLS(SS_KEYS.resumeText, resume_text);
+      writeLS(SS_KEYS.resumeFileName, file.name);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upload failed.";
       setResumeError(message);
@@ -148,8 +179,8 @@ async function handleResumeUpload(file: File) {
     setResumeText(null);
     setResumeFileName(null);
     setResumeError(null);
-    clearSS(SS_KEYS.resumeText);
-    clearSS(SS_KEYS.resumeFileName);
+    clearLS(SS_KEYS.resumeText);
+    clearLS(SS_KEYS.resumeFileName);
   }
 
   async function handleSearch(e: React.FormEvent) {

@@ -64,6 +64,16 @@ function readSS<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
+function readLS<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 
 export default function JobDetailPage() {
   const { isSignedIn, isLoaded } = useUser();
@@ -97,7 +107,7 @@ export default function JobDetailPage() {
   // This lets people open jobs in new tabs / share URLs without breaking.
   useEffect(() => {
     (async () => {
-      const savedResume = readSS<string | null>(SS_KEYS.resumeText, null);
+      const savedResume = readLS<string | null>(SS_KEYS.resumeText, null);
       setResumeText(savedResume);
 
       // Try sessionStorage first (fast)
