@@ -294,15 +294,28 @@ export default function JobDetailPage() {
 
           {/* Actions */}
           <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-            <button
-              type="button"
-              onClick={handleImprove}
-              disabled={!resumeText || tailoringLoading}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
-            >
-              {tailoringLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Improve my resume
-            </button>
+            {(!ats?.initial_ats_score || ats.initial_ats_score < 85) && (
+              <button
+                type="button"
+                onClick={handleImprove}
+                disabled={!resumeText || tailoringLoading}
+                className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+              >
+                {tailoringLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                Improve my resume
+              </button>
+            )}
+
+            {ats?.initial_ats_score && ats.initial_ats_score >= 85 && (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-center">
+                <p className="text-[11px] font-semibold text-emerald-800">
+                  ✓ Strong match — no tailoring needed
+                </p>
+                <p className="mt-0.5 text-[10px] text-emerald-700">
+                  Your resume already fits this role well. Apply as-is.
+                </p>
+              </div>
+            )}
 
             {/* Compact result card — shows after Improve is clicked */}
             {tailored && (
