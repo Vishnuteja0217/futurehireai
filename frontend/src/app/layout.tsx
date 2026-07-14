@@ -14,7 +14,10 @@ export const metadata: Metadata = {
   title: "FutureHireAI — H1B sponsor jobs + honest ATS scoring",
   description:
     "Find jobs at companies that actually sponsor H1B visas. Real USCIS data on 62,983 sponsors. Honest ATS scoring against your resume. Job search, done right.",
-  openGraph: {
+  verification: {
+    google:"1_xAraxapm0cqlJmpLNqWhXIAN68nFh7NFN0LSUOtuA",
+  },
+    openGraph: {
     title: "FutureHireAI — H1B sponsor jobs + honest ATS scoring",
     description:
       "Find jobs at companies that actually sponsor H1B visas. Real USCIS data on 62,983 sponsors. Honest ATS scoring against your resume.",
