@@ -11,9 +11,23 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "FutureHireAI — Get Interview-Ready, Not Just Resume-Ready",
+  title: "FutureHireAI — H1B sponsor jobs + honest ATS scoring",
   description:
-    "AI checks your resume against any job, shows you why you'd get rejected, fixes it, and preps you for the interview — all in one place.",
+    "Find jobs at companies that actually sponsor H1B visas. Real USCIS data on 62,983 sponsors. Honest ATS scoring against your resume. Job search, done right.",
+  openGraph: {
+    title: "FutureHireAI — H1B sponsor jobs + honest ATS scoring",
+    description:
+      "Find jobs at companies that actually sponsor H1B visas. Real USCIS data on 62,983 sponsors. Honest ATS scoring against your resume.",
+    url: "https://futurehireai.com",
+    siteName: "FutureHireAI",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FutureHireAI — H1B sponsor jobs + honest ATS scoring",
+    description:
+      "Find jobs at companies that actually sponsor H1B visas. Real USCIS data on 62,983 sponsors. Honest ATS scoring against your resume.",
+  },
 };
 
 export default function RootLayout({
