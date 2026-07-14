@@ -125,6 +125,8 @@ export default function JobsPage() {
   const [location, setLocation] = useState(() =>
     readSS<string>(SS_KEYS.location, ""),
   );
+  // Sort order — "h1b" default (keeps H1B priority), "latest" (newest first regardless)
+  const [sortBy, setSortBy] = useState<"h1b" | "latest">("h1b");
 
   // Results state — restored so the detail page → back button keeps the list
   const [results, setResults] = useState<JobSearchResponse | null>(() =>
@@ -299,7 +301,9 @@ async function handleResumeUpload(file: File) {
       {/* Content states */}
       {loading && <LoadingState />}
       {!loading && !results && !error && <EmptyState />}
-      {!loading && results && <ResultsList results={results} />}
+      {!loading && results && (
+        <ResultsList results={results} sortBy={sortBy} onSortChange={setSortBy} />
+      )}
     </div>
   );
 }
@@ -336,8 +340,26 @@ function LoadingState() {
 
 // ── Results header + list ─────────────────────────────────────────────────────
 
-function ResultsList({ results }: { results: JobSearchResponse }) {
+function ResultsList({
+  results,
+  sortBy,
+  onSortChange,
+}: {
+  results: JobSearchResponse;
+  sortBy: "h1b" | "latest";
+  onSortChange: (v: "h1b" | "latest") => void;
+}) {
   const { jobs, total_returned, h1b_sponsors_count, cached } = results;
+
+  // Client-side sort based on user's dropdown choice
+  const sortedJobs = [...jobs].sort((a, b) => {
+    if (sortBy === "latest") {
+      // Newest first regardless of H1B
+      return (new Date(b.posted_at).getTime() || 0) - (new Date(a.posted_at).getTime() || 0);
+    }
+    // "h1b" — backend already sorted this way, keep as-is
+    return 0;
+  });
 
   if (total_returned === 0) {
     return (
@@ -351,7 +373,7 @@ function ResultsList({ results }: { results: JobSearchResponse }) {
 
   return (
     <>
-      {/* Summary row */}
+      {/* Summary row + sort dropdown */}
       <div className="mb-4 flex items-center justify-between text-xs text-slate-500">
         <span>
           {total_returned} job{total_returned !== 1 ? "s" : ""} ·{" "}
@@ -359,13 +381,24 @@ function ResultsList({ results }: { results: JobSearchResponse }) {
             {h1b_sponsors_count} H1B sponsor{h1b_sponsors_count !== 1 ? "s" : ""}
           </span>
         </span>
-        {cached && (
-          <span className="text-slate-400">Cached · updated hourly</span>
-        )}
+        <div className="flex items-center gap-3">
+          {cached && <span className="text-slate-400">Cached</span>}
+          <label className="flex items-center gap-1.5">
+            <span className="text-slate-400">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => onSortChange(e.target.value as "h1b" | "latest")}
+              className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs font-medium text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="h1b">H1B sponsors first</option>
+              <option value="latest">Newest first</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <div className="space-y-3">
-        {jobs.map((job) => (
+        {sortedJobs.map((job) => (
           <JobCard key={job.job_id} job={job} />
         ))}
       </div>
@@ -442,9 +475,19 @@ function JobCard({ job }: { job: Job }) {
                 No H1B history
               </span>
             )}
-            {job.is_remote && (
+            {job.work_arrangement === "remote" && (
               <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-100">
                 Remote
+              </span>
+            )}
+            {job.work_arrangement === "hybrid" && (
+              <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-0.5 text-[11px] font-medium text-purple-700 ring-1 ring-inset ring-purple-100">
+                Hybrid
+              </span>
+            )}
+            {job.work_arrangement === "onsite" && (
+              <span className="inline-flex items-center rounded-full bg-slate-50 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
+                Onsite
               </span>
             )}
           </div>
