@@ -76,6 +76,7 @@ export interface Job {
   location: string;
   job_type: string;              // "Full-time", "Contractor", etc.
   is_remote: boolean;
+  work_arrangement: string;  // "remote" | "hybrid" | "onsite"
   posted_at: string;             // ISO datetime string
   salary_min: number | null;
   salary_max: number | null;
