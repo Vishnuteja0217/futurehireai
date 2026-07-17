@@ -796,7 +796,7 @@ def get_demo_jobs():
             "job_id": "demo-amazon-sde2",
             "title": "Software Development Engineer II",
             "company": "Amazon",
-            "company_logo": "https://logo.clearbit.com/amazon.com",
+            "company_logo": "https://www.google.com/s2/favicons?sz=128&domain=amazon.com",
             "location": "Seattle, WA, US",
             "job_type": "Full-time",
             "is_remote": True,
