@@ -96,5 +96,6 @@ export interface JobSearchResponse {
   query: string;                 // The search string sent to JSearch
   cached?: boolean;              // True if returned from Supabase cache
   cache_age_hours?: number;      // How stale the cached result is
+  is_demo?: boolean;             // True if returned from /demo-jobs (anonymous browse)
   error?: string;                // Present on failure (missing key, JSearch down)
 }

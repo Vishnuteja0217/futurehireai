@@ -188,3 +188,17 @@ export function getJobDetails(job_id: string) {
     return res.json() as Promise<{ job?: Job; error?: string }>;
   });
 }
+
+/**
+ * Fetch curated demo jobs — the anonymous browse experience.
+ * No auth required. Returns 10 hand-picked H1B sponsor roles.
+ */
+export function getDemoJobs() {
+  return fetch(`${API_BASE_URL}/demo-jobs`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  }).then(async (res) => {
+    if (!res.ok) throw new Error(`API /demo-jobs failed with ${res.status}`);
+    return res.json() as Promise<JobSearchResponse & { is_demo: boolean }>;
+  });
+}
